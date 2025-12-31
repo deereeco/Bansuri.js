@@ -259,7 +259,7 @@ body {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 10px 12px;
   background: var(--bg-tertiary);
   border-radius: var(--border-radius);
@@ -785,4 +785,223 @@ select:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+/* ===== NEW: Horizontal Layout for Index Page ===== */
+
+/* When using horizontal layout class on body or app-container */
+.horizontal-layout .app-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.horizontal-layout .app-main > section {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Settings bar - compact horizontal row, centered */
+.settings-bar {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.settings-bar .key-selector-container,
+.settings-bar .volume-control,
+.settings-bar .waveform-control {
+  margin: 0;
+}
+
+/* Note grid section - compact, no extra space */
+.note-grid-section {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+/* Combined note grid - two rows with saptak groupings */
+.combined-note-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Saptak (octave) groups container */
+.saptak-groups {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* Individual saptak group */
+.saptak-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 6px;
+  padding: 4px 4px 3px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.saptak-label {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+  padding: 0 4px;
+}
+
+.saptak-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.saptak-row {
+  display: flex;
+  gap: 2px;
+}
+
+.note-cell {
+  min-width: 26px;
+  padding: 5px 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-align: center;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  white-space: nowrap;
+}
+
+/* Sargam row styling */
+.sargam-row .note-cell {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.sargam-row .note-cell:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.sargam-row .note-cell.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.sargam-row .note-cell.komal {
+  background: var(--bg-primary);
+  font-style: italic;
+  font-size: 0.7rem;
+}
+
+.sargam-row .note-cell.tivra {
+  border: 2px solid var(--warning);
+}
+
+/* Western row styling */
+.western-row .note-cell {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.western-row .note-cell:hover {
+  background: var(--accent-secondary);
+  color: var(--text-primary);
+}
+
+.western-row .note-cell.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+
+/* Horizontal bansuri section */
+.horizontal-layout .bansuri-section {
+  position: relative;
+  padding: 10px 15px;
+}
+
+.horizontal-layout .bansuri-section.horizontal {
+  order: 10;
+}
+
+/* Horizontal bansuri SVG styling - fill container */
+.bansuri-svg.horizontal {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 80px;
+  display: block;
+}
+
+/* Horizontal half-hole gradient fix */
+.bansuri-svg.horizontal .hole-half {
+  fill: url(#halfHoleGradientH);
+}
+
+/* Responsive adjustments for horizontal layout */
+@media (max-width: 700px) {
+  .saptak-groups {
+    gap: 4px;
+  }
+
+  .saptak-group {
+    padding: 4px 2px 3px;
+  }
+
+  .saptak-label {
+    font-size: 0.55rem;
+  }
+
+  .note-cell {
+    min-width: 24px;
+    padding: 5px 2px;
+    font-size: 0.6rem;
+  }
+
+  .sargam-row .note-cell.komal,
+  .western-row .note-cell {
+    font-size: 0.55rem;
+  }
+
+  .settings-bar {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+}
+
+/* Very small screens - allow scroll */
+@media (max-width: 500px) {
+  .saptak-groups {
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 5px;
+  }
+
+  .saptak-group {
+    flex-shrink: 0;
+  }
+
+  .note-cell {
+    min-width: 26px;
+  }
 }

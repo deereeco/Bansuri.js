@@ -478,6 +478,199 @@ function createOctaveSelector(container, onChange) {
   };
 }
 
+/**
+ * Create combined Sargam/Western note grid with saptak groupings
+ * Three groups: Mandra (Pa-Ni), Madhya (Sa-Ni), Taar (Sa-Pa)
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onNoteSelect - Callback when note is selected
+ * @param {object} options - Configuration options
+ * @returns {object} Controller object
+ */
+function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
+  const { bansuriKey = 'G' } = options;
+
+  // Define saptak groups with their notes
+  const SAPTAK_GROUPS = [
+    {
+      name: 'Mandra',
+      label: 'Mandra (Pa–Ni)',
+      notes: [
+        { semitone: 7, sargam: 'Pa', label: 'Pa' },
+        { semitone: 8, sargam: 'Komal Dha', label: 'dha', komal: true },
+        { semitone: 9, sargam: 'Dha', label: 'Dha' },
+        { semitone: 10, sargam: 'Komal Ni', label: 'ni', komal: true },
+        { semitone: 11, sargam: 'Ni', label: 'Ni' }
+      ]
+    },
+    {
+      name: 'Madhya',
+      label: 'Madhya (Sa–Ni)',
+      notes: [
+        { semitone: 12, sargam: 'Sa', label: 'Sa' },
+        { semitone: 13, sargam: 'Komal Re', label: 're', komal: true },
+        { semitone: 14, sargam: 'Re', label: 'Re' },
+        { semitone: 15, sargam: 'Komal Ga', label: 'ga', komal: true },
+        { semitone: 16, sargam: 'Ga', label: 'Ga' },
+        { semitone: 17, sargam: 'Ma', label: 'Ma' },
+        { semitone: 18, sargam: 'Tivra Ma', label: "Ma'", tivra: true },
+        { semitone: 19, sargam: 'Pa', label: 'Pa' },
+        { semitone: 20, sargam: 'Komal Dha', label: 'dha', komal: true },
+        { semitone: 21, sargam: 'Dha', label: 'Dha' },
+        { semitone: 22, sargam: 'Komal Ni', label: 'ni', komal: true },
+        { semitone: 23, sargam: 'Ni', label: 'Ni' }
+      ]
+    },
+    {
+      name: 'Taar',
+      label: 'Taar (Sa–Pa)',
+      notes: [
+        { semitone: 24, sargam: 'Sa', label: 'Sa' },
+        { semitone: 25, sargam: 'Komal Re', label: 're', komal: true },
+        { semitone: 26, sargam: 'Re', label: 'Re' },
+        { semitone: 27, sargam: 'Komal Ga', label: 'ga', komal: true },
+        { semitone: 28, sargam: 'Ga', label: 'Ga' },
+        { semitone: 29, sargam: 'Ma', label: 'Ma' },
+        { semitone: 30, sargam: 'Tivra Ma', label: "Ma'", tivra: true },
+        { semitone: 31, sargam: 'Pa', label: 'Pa' }
+      ]
+    }
+  ];
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'combined-note-grid';
+
+  const saptakContainer = document.createElement('div');
+  saptakContainer.className = 'saptak-groups';
+
+  const allSargamButtons = [];
+  const allWesternButtons = [];
+  let currentBansuriKey = bansuriKey;
+
+  // Helper to get Western note from MIDI
+  function midiToNoteName(midi) {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const noteIndex = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    return { note: noteNames[noteIndex], octave, full: noteNames[noteIndex] + octave };
+  }
+
+  // Create each saptak group
+  SAPTAK_GROUPS.forEach(group => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'saptak-group';
+    groupDiv.dataset.saptak = group.name.toLowerCase();
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'saptak-label';
+    labelDiv.textContent = group.label;
+    groupDiv.appendChild(labelDiv);
+
+    const notesDiv = document.createElement('div');
+    notesDiv.className = 'saptak-notes';
+
+    const sargamRow = document.createElement('div');
+    sargamRow.className = 'saptak-row sargam-row';
+
+    const westernRow = document.createElement('div');
+    westernRow.className = 'saptak-row western-row';
+
+    group.notes.forEach(noteInfo => {
+      const { semitone, sargam, label, komal, tivra } = noteInfo;
+
+      // Sargam button
+      const sargamBtn = document.createElement('button');
+      sargamBtn.className = 'note-cell sargam-cell';
+      sargamBtn.textContent = label;
+      sargamBtn.title = sargam;
+      sargamBtn.dataset.semitone = semitone;
+      sargamBtn.dataset.sargam = sargam;
+
+      if (komal) sargamBtn.classList.add('komal');
+      if (tivra) sargamBtn.classList.add('tivra');
+
+      // Western button
+      const westernBtn = document.createElement('button');
+      westernBtn.className = 'note-cell western-cell';
+      westernBtn.dataset.semitone = semitone;
+
+      // Calculate initial Western note
+      const baseMidi = BANSURI_KEYS[currentBansuriKey];
+      const midiNote = baseMidi + semitone;
+      const western = midiToNoteName(midiNote);
+      westernBtn.textContent = western.note;
+      westernBtn.title = western.full;
+      westernBtn.dataset.midi = midiNote;
+
+      // Click handlers
+      const handleClick = () => {
+        // Clear previous selections
+        allSargamButtons.forEach(b => b.classList.remove('active'));
+        allWesternButtons.forEach(b => b.classList.remove('active'));
+
+        // Highlight both corresponding buttons
+        sargamBtn.classList.add('active');
+        westernBtn.classList.add('active');
+
+        // Get current MIDI note based on current key
+        const currentBaseMidi = BANSURI_KEYS[currentBansuriKey];
+        const currentMidiNote = currentBaseMidi + semitone;
+
+        onNoteSelect(sargam, currentMidiNote, semitone);
+      };
+
+      sargamBtn.addEventListener('click', handleClick);
+      westernBtn.addEventListener('click', handleClick);
+
+      sargamRow.appendChild(sargamBtn);
+      westernRow.appendChild(westernBtn);
+      allSargamButtons.push(sargamBtn);
+      allWesternButtons.push(westernBtn);
+    });
+
+    notesDiv.appendChild(sargamRow);
+    notesDiv.appendChild(westernRow);
+    groupDiv.appendChild(notesDiv);
+    saptakContainer.appendChild(groupDiv);
+  });
+
+  wrapper.appendChild(saptakContainer);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+
+    updateWesternNotes(newBansuriKey) {
+      currentBansuriKey = newBansuriKey;
+      const baseMidi = BANSURI_KEYS[newBansuriKey];
+
+      allWesternButtons.forEach(btn => {
+        const semitone = parseInt(btn.dataset.semitone);
+        const midiNote = baseMidi + semitone;
+        const western = midiToNoteName(midiNote);
+        btn.textContent = western.note;
+        btn.title = western.full;
+        btn.dataset.midi = midiNote;
+      });
+    },
+
+    setActiveNote(semitone) {
+      allSargamButtons.forEach(b => b.classList.remove('active'));
+      allWesternButtons.forEach(b => b.classList.remove('active'));
+
+      const sargamBtn = allSargamButtons.find(b => parseInt(b.dataset.semitone) === semitone);
+      const westernBtn = allWesternButtons.find(b => parseInt(b.dataset.semitone) === semitone);
+
+      if (sargamBtn) sargamBtn.classList.add('active');
+      if (westernBtn) westernBtn.classList.add('active');
+    },
+
+    clearSelection() {
+      allSargamButtons.forEach(b => b.classList.remove('active'));
+      allWesternButtons.forEach(b => b.classList.remove('active'));
+    }
+  };
+}
+
 // Export
 export {
   createNoteButtons,
@@ -485,5 +678,6 @@ export {
   createKeySelector,
   createPianoKeyboard,
   createSargamButtons,
-  createOctaveSelector
+  createOctaveSelector,
+  createCombinedNoteGrid
 };

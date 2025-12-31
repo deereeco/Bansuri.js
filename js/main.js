@@ -1,28 +1,24 @@
 /**
  * Bansuri.js - Main Application (Home Page)
- * Simple inputs: Western notes, Sargam, text input
+ * New horizontal layout with combined Sargam/Western note grid
  */
 
-import { getFingeringForMidi, getFingeringForSargam, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
-import { createBansuri } from './bansuri-svg.js';
+import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
+import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playTap, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
-import { createNoteButtons, createTextInput, createKeySelector, createSargamButtons, createOctaveSelector } from './input-handlers.js';
+import { createKeySelector, createCombinedNoteGrid } from './input-handlers.js';
 
 // Application state
 const state = {
   bansuriKey: 'G',
-  currentOctaveOffset: 0,
   currentFingering: null,
   audioEnabled: true
 };
 
 // UI Components
 let bansuri = null;
-let noteButtons = null;
+let combinedNoteGrid = null;
 let keySelector = null;
-let textInput = null;
-let sargamButtons = null;
-let octaveSelector = null;
 
 /**
  * Initialize the application
@@ -30,7 +26,8 @@ let octaveSelector = null;
 function init() {
   // Get container elements
   const bansuriContainer = document.getElementById('bansuri-display');
-  const controlsContainer = document.getElementById('controls');
+  const settingsContainer = document.getElementById('settings-bar');
+  const noteGridContainer = document.getElementById('note-grid');
   const noteInfoContainer = document.getElementById('note-info');
 
   if (!bansuriContainer) {
@@ -38,15 +35,22 @@ function init() {
     return;
   }
 
-  // Create bansuri SVG
-  bansuri = createBansuri(bansuriContainer);
+  // Create horizontal bansuri SVG
+  bansuri = createHorizontalBansuri(bansuriContainer);
 
-  // Create controls if container exists
-  if (controlsContainer) {
-    createControls(controlsContainer);
+  // Create settings bar
+  if (settingsContainer) {
+    createSettingsBar(settingsContainer);
   }
 
-  // Create note info display if container exists
+  // Create combined note grid
+  if (noteGridContainer) {
+    combinedNoteGrid = createCombinedNoteGrid(noteGridContainer, handleNoteSelect, {
+      bansuriKey: state.bansuriKey
+    });
+  }
+
+  // Create note info display
   if (noteInfoContainer) {
     createNoteInfo(noteInfoContainer);
   }
@@ -58,7 +62,7 @@ function init() {
   // Load saved preferences
   loadPreferences();
 
-  console.log('Bansuri.js initialized');
+  console.log('Bansuri.js initialized (horizontal layout)');
 }
 
 /**
@@ -69,49 +73,17 @@ function initAudioOnce() {
 }
 
 /**
- * Create control panel
+ * Create settings bar (key selector, volume, waveform)
  */
-function createControls(container) {
-  // Settings section (key, volume, waveform)
-  const settingsSection = createSection(container, 'Settings');
-  keySelector = createKeySelector(settingsSection, handleKeyChange, state.bansuriKey);
-  createVolumeControl(settingsSection);
-  createWaveformControl(settingsSection);
+function createSettingsBar(container) {
+  // Key selector
+  keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
 
-  // Western notes section
-  const westernSection = createSection(container, 'Western Notes');
-  noteButtons = createNoteButtons(westernSection, handleNoteSelect, {
-    bansuriKey: state.bansuriKey,
-    octaveRange: [3, 5]
-  });
+  // Volume control
+  createVolumeControl(container);
 
-  // Indian notes section
-  const indianSection = createSection(container, 'Indian Notes (Sargam)');
-  octaveSelector = createOctaveSelector(indianSection, (offset) => {
-    state.currentOctaveOffset = offset;
-  });
-  sargamButtons = createSargamButtons(indianSection, handleSargamSelect);
-
-  // Text input section
-  const textSection = createSection(container, 'Text Input');
-  textInput = createTextInput(textSection, handleNoteSelect);
-}
-
-/**
- * Create a section with header
- */
-function createSection(container, title) {
-  const section = document.createElement('div');
-  section.className = 'control-section';
-
-  const header = document.createElement('h3');
-  header.className = 'section-header';
-  header.textContent = title;
-
-  section.appendChild(header);
-  container.appendChild(section);
-
-  return section;
+  // Waveform control
+  createWaveformControl(container);
 }
 
 /**
@@ -165,10 +137,10 @@ function createWaveformControl(container) {
 
   const waveforms = getWaveformTypes();
   const labels = {
-    'sine': 'Sine (Pure)',
-    'triangle': 'Triangle (Flute-like)',
-    'sawtooth': 'Sawtooth (Bright)',
-    'square': 'Square (Hollow)'
+    'sine': 'Sine',
+    'triangle': 'Flute',
+    'sawtooth': 'Bright',
+    'square': 'Hollow'
   };
 
   waveforms.forEach(wf => {
@@ -237,9 +209,12 @@ function updateNoteInfo(fingering) {
 }
 
 /**
- * Handle note selection (from buttons or text input)
+ * Handle note selection from combined grid
+ * @param {string} sargamNote - The Indian note name
+ * @param {number} midiNote - The MIDI note number
+ * @param {number} semitone - Semitones from low Sa
  */
-function handleNoteSelect(noteName, midiNote) {
+function handleNoteSelect(sargamNote, midiNote, semitone) {
   const fingering = getFingeringForMidi(midiNote, state.bansuriKey);
 
   if (fingering) {
@@ -255,44 +230,32 @@ function handleNoteSelect(noteName, midiNote) {
 }
 
 /**
- * Handle Sargam (Indian note) selection
- */
-function handleSargamSelect(indianNote) {
-  const fingering = getFingeringForSargam(indianNote, state.currentOctaveOffset, state.bansuriKey);
-
-  if (fingering) {
-    state.currentFingering = fingering;
-    bansuri.setFingering(fingering);
-    updateNoteInfo(fingering);
-
-    if (state.audioEnabled) {
-      playTap(fingering.midiNote);
-    }
-
-    // Clear note button selection
-    if (noteButtons) {
-      noteButtons.clearSelection();
-    }
-  }
-}
-
-/**
  * Handle bansuri key change
  */
 function handleKeyChange(newKey) {
   state.bansuriKey = newKey;
 
-  // Update playable notes in UI components
-  if (noteButtons) {
-    noteButtons.updatePlayableNotes(newKey);
+  // Update Western notes in the combined grid
+  if (combinedNoteGrid) {
+    combinedNoteGrid.updateWesternNotes(newKey);
   }
 
   // Re-apply current fingering if there is one
   if (state.currentFingering) {
-    const newFingering = getFingeringForMidi(state.currentFingering.midiNote, newKey);
-    if (newFingering) {
-      bansuri.setFingering(newFingering);
-      updateNoteInfo(newFingering);
+    // Get the semitone offset from the current fingering
+    const semitone = state.currentFingering.semitonesFromSa;
+    if (semitone !== undefined) {
+      // Recalculate based on new key
+      const baseMidi = BANSURI_KEYS[newKey];
+      const newMidiNote = baseMidi + semitone +
+        (state.currentFingering.octave === 'madhya' ? 12 :
+         state.currentFingering.octave === 'taar' ? 24 : 0);
+
+      const newFingering = getFingeringForMidi(newMidiNote, newKey);
+      if (newFingering) {
+        bansuri.setFingering(newFingering);
+        updateNoteInfo(newFingering);
+      }
     }
   }
 
@@ -324,6 +287,14 @@ function loadPreferences() {
     if (prefs) {
       if (prefs.bansuriKey && BANSURI_KEYS[prefs.bansuriKey]) {
         state.bansuriKey = prefs.bansuriKey;
+        // Update key selector if it exists
+        if (keySelector) {
+          keySelector.setKey(prefs.bansuriKey);
+        }
+        // Update combined note grid
+        if (combinedNoteGrid) {
+          combinedNoteGrid.updateWesternNotes(prefs.bansuriKey);
+        }
       }
       if (typeof prefs.volume === 'number') {
         setVolume(prefs.volume);

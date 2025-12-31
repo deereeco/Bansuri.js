@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-container horizontal-layout">
     <header class="app-header">
       <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">
         <span class="hamburger-icon">☰</span>
@@ -35,15 +35,24 @@
     </header>
 
     <main class="app-main">
-      <!-- Bansuri Display -->
-      <section class="bansuri-section">
-        <div id="bansuri-display" class="bansuri-display"></div>
+      <!-- Compact settings bar -->
+      <section class="settings-section">
+        <div id="settings-bar" class="settings-bar"></div>
       </section>
 
-      <!-- Controls with Note Info above -->
-      <section class="controls-section">
+      <!-- Note info display -->
+      <section class="note-info-section">
         <div id="note-info" class="note-info"></div>
-        <div id="controls" class="controls"></div>
+      </section>
+
+      <!-- Combined note grid -->
+      <section class="note-grid-section">
+        <div id="note-grid" class="note-grid"></div>
+      </section>
+
+      <!-- Horizontal bansuri at bottom -->
+      <section class="bansuri-section horizontal">
+        <div id="bansuri-display" class="bansuri-display"></div>
       </section>
     </main>
 

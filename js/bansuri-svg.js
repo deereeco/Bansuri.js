@@ -1,6 +1,7 @@
 /**
- * Bansuri.js - SVG Flute Rendering Component (Vertical)
+ * Bansuri.js - SVG Flute Rendering Component
  * Creates an interactive SVG visualization of a 6-hole bansuri
+ * Supports both vertical and horizontal orientations
  */
 
 import { OPEN, CLOSED, HALF, OCTAVES } from './fingering-data.js';
@@ -22,6 +23,22 @@ const DEFAULT_CONFIG = {
   holeStroke: '#5D3A1A',
   blowHoleRadius: 14,
   animationDuration: 150     // ms
+};
+
+// Horizontal orientation config (wider for better display)
+const HORIZONTAL_CONFIG = {
+  width: 900,
+  height: 100,
+  tubeColor: '#8B4513',
+  tubeHighlight: '#DEB887',
+  holeRadius: 22,
+  holeSpacing: 100,
+  holeFillClosed: '#2C1810',
+  holeFillOpen: '#1a1a1a',
+  holeFillHalf: 'url(#halfHoleGradientH)',
+  holeStroke: '#5D3A1A',
+  blowHoleRadius: 16,
+  animationDuration: 150
 };
 
 /**
@@ -432,5 +449,312 @@ function getOctaveDisplayText(octave) {
   }
 }
 
+/**
+ * Create horizontal bansuri SVG element
+ * @param {HTMLElement} container - Container element to append SVG to
+ * @param {object} config - Configuration options
+ * @returns {object} Bansuri controller object
+ */
+function createHorizontalBansuri(container, config = {}) {
+  const cfg = { ...HORIZONTAL_CONFIG, ...config };
+
+  // Create SVG element
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${cfg.width} ${cfg.height}`);
+  svg.setAttribute('class', 'bansuri-svg horizontal');
+
+  // Create definitions for gradients
+  const defs = document.createElementNS(SVG_NS, 'defs');
+
+  // Bamboo gradient for tube (vertical gradient for 3D effect on horizontal tube)
+  const tubeGradient = createLinearGradient('tubeGradientH', [
+    { offset: '0%', color: cfg.tubeHighlight },
+    { offset: '30%', color: cfg.tubeColor },
+    { offset: '70%', color: cfg.tubeColor },
+    { offset: '100%', color: cfg.tubeHighlight }
+  ], 90); // vertical gradient for horizontal tube
+  defs.appendChild(tubeGradient);
+
+  // Half-hole gradient (half covered - top to bottom for horizontal orientation)
+  const halfHoleGradient = createLinearGradient('halfHoleGradientH', [
+    { offset: '0%', color: '#8B4513' },    // Brown (closed/finger)
+    { offset: '50%', color: '#8B4513' },
+    { offset: '50%', color: '#2a2a2a' },   // Dark gray (open)
+    { offset: '100%', color: '#2a2a2a' }
+  ], 90); // vertical gradient
+  defs.appendChild(halfHoleGradient);
+
+  // Hole inner shadow
+  const holeShadow = createRadialGradient('holeShadowH', [
+    { offset: '0%', color: '#000000' },
+    { offset: '70%', color: '#1a1a1a' },
+    { offset: '100%', color: '#333333' }
+  ]);
+  defs.appendChild(holeShadow);
+
+  svg.appendChild(defs);
+
+  // Draw bamboo tube (horizontal)
+  const tube = createHorizontalTube(cfg);
+  svg.appendChild(tube);
+
+  // Draw blowhole (on left side)
+  const blowhole = createHorizontalBlowhole(cfg);
+  svg.appendChild(blowhole);
+
+  // Draw 6 finger holes (horizontal arrangement)
+  // R3-R2 gap is 1.5x normal spacing
+  const holes = [];
+  const startX = 250; // Start position for first hole from left (moved right)
+  const centerY = cfg.height / 2;
+  const holePositions = [];
+
+  for (let i = 0; i < 6; i++) {
+    // Add extra spacing between R2 (index 4) and R3 (index 5)
+    let x;
+    if (i <= 4) {
+      x = startX + i * cfg.holeSpacing;
+    } else {
+      // R3 gets 1.5x spacing from R2
+      x = startX + 4 * cfg.holeSpacing + cfg.holeSpacing * 1.5;
+    }
+    holePositions.push(x);
+    const hole = createHole(x, centerY, cfg.holeRadius, i + 1, cfg);
+    holes.push(hole);
+    svg.appendChild(hole.group);
+  }
+
+  // Create finger labels (below holes)
+  const fingerLabels = createHorizontalFingerLabelsWithPositions(holePositions, cfg);
+  svg.appendChild(fingerLabels);
+
+  // Append to container
+  container.appendChild(svg);
+
+  // Current state
+  let currentFingering = null;
+
+  // Controller object
+  const controller = {
+    svg,
+    holes,
+
+    setFingering(fingering) {
+      currentFingering = fingering;
+
+      if (!fingering) {
+        holes.forEach(hole => setHoleState(hole, OPEN, cfg));
+        return;
+      }
+
+      fingering.holes.forEach((state, index) => {
+        setHoleState(holes[index], state, cfg);
+      });
+    },
+
+    getFingering() {
+      return currentFingering;
+    },
+
+    highlightHole(holeIndex, highlight) {
+      if (holeIndex >= 0 && holeIndex < 6) {
+        const hole = holes[holeIndex];
+        if (highlight) {
+          hole.circle.classList.add('highlighted');
+        } else {
+          hole.circle.classList.remove('highlighted');
+        }
+      }
+    },
+
+    clearHighlights() {
+      holes.forEach(hole => hole.circle.classList.remove('highlighted'));
+    }
+  };
+
+  return controller;
+}
+
+/**
+ * Create the main bamboo tube (horizontal)
+ */
+function createHorizontalTube(cfg) {
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'bansuri-tube');
+
+  const tubeHeight = 55;
+  const tubeY = (cfg.height - tubeHeight) / 2;
+
+  const tube = document.createElementNS(SVG_NS, 'rect');
+  tube.setAttribute('x', 15);
+  tube.setAttribute('y', tubeY);
+  tube.setAttribute('width', cfg.width - 30);
+  tube.setAttribute('height', tubeHeight);
+  tube.setAttribute('rx', tubeHeight / 2);
+  tube.setAttribute('ry', tubeHeight / 2);
+  tube.setAttribute('fill', 'url(#tubeGradientH)');
+  tube.setAttribute('stroke', '#5D3A1A');
+  tube.setAttribute('stroke-width', 2);
+
+  // Bamboo node lines (decorative, vertical) - spread across the flute
+  const nodes = [100, 380, 660];
+  nodes.forEach(x => {
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', x);
+    line.setAttribute('y1', tubeY + 5);
+    line.setAttribute('x2', x);
+    line.setAttribute('y2', tubeY + tubeHeight - 5);
+    line.setAttribute('stroke', '#6B4423');
+    line.setAttribute('stroke-width', 2);
+    line.setAttribute('opacity', 0.5);
+    group.appendChild(line);
+  });
+
+  group.appendChild(tube);
+  return group;
+}
+
+/**
+ * Create the blowhole (on left side for horizontal)
+ */
+function createHorizontalBlowhole(cfg) {
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'bansuri-blowhole');
+
+  const x = 60;
+  const y = cfg.height / 2;
+
+  const blowhole = document.createElementNS(SVG_NS, 'ellipse');
+  blowhole.setAttribute('cx', x);
+  blowhole.setAttribute('cy', y);
+  blowhole.setAttribute('rx', cfg.blowHoleRadius);
+  blowhole.setAttribute('ry', cfg.blowHoleRadius * 0.6);
+  blowhole.setAttribute('fill', 'url(#holeShadowH)');
+  blowhole.setAttribute('stroke', cfg.holeStroke);
+  blowhole.setAttribute('stroke-width', 1.5);
+
+  group.appendChild(blowhole);
+  return group;
+}
+
+/**
+ * Create octave indicator (on the right side for horizontal)
+ */
+function createHorizontalOctaveIndicator(cfg) {
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'octave-indicator');
+
+  const x = cfg.width - 90;
+  const centerY = cfg.height / 2;
+
+  // Background
+  const bg = document.createElementNS(SVG_NS, 'rect');
+  bg.setAttribute('x', x - 5);
+  bg.setAttribute('y', centerY - 18);
+  bg.setAttribute('width', 75);
+  bg.setAttribute('height', 36);
+  bg.setAttribute('rx', 4);
+  bg.setAttribute('fill', 'rgba(0, 0, 0, 0.3)');
+  group.appendChild(bg);
+
+  // Octave text
+  const text = document.createElementNS(SVG_NS, 'text');
+  text.setAttribute('x', x + 32);
+  text.setAttribute('y', centerY - 2);
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('font-size', '11');
+  text.setAttribute('font-family', 'Arial, sans-serif');
+  text.setAttribute('fill', '#ffffff');
+  text.textContent = '';
+  group.appendChild(text);
+
+  // Breath indicator (simple bar)
+  const breathBar = document.createElementNS(SVG_NS, 'rect');
+  breathBar.setAttribute('x', x);
+  breathBar.setAttribute('y', centerY + 6);
+  breathBar.setAttribute('width', 0);
+  breathBar.setAttribute('height', 5);
+  breathBar.setAttribute('fill', '#4CAF50');
+  group.appendChild(breathBar);
+
+  return {
+    group,
+    text,
+    breathBar,
+    setText(str) {
+      text.textContent = str;
+    },
+    setBreathLevel(octave) {
+      let width = 0;
+      let color = '#4CAF50';
+
+      if (octave === OCTAVES.LOW) {
+        width = 20;
+        color = '#4CAF50';
+      } else if (octave === OCTAVES.MIDDLE) {
+        width = 42;
+        color = '#FFC107';
+      } else if (octave === OCTAVES.HIGH) {
+        width = 65;
+        color = '#F44336';
+      }
+
+      breathBar.setAttribute('width', width);
+      breathBar.setAttribute('fill', color);
+    }
+  };
+}
+
+/**
+ * Create finger position labels (below holes for horizontal)
+ */
+function createHorizontalFingerLabels(startX, cfg) {
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'finger-labels');
+
+  const labels = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'];
+  const y = cfg.height / 2 + cfg.holeRadius + 16;
+
+  labels.forEach((label, i) => {
+    const x = startX + i * cfg.holeSpacing;
+    const text = document.createElementNS(SVG_NS, 'text');
+    text.setAttribute('x', x);
+    text.setAttribute('y', y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '11');
+    text.setAttribute('font-family', 'Arial, sans-serif');
+    text.setAttribute('fill', '#888');
+    text.textContent = label;
+    group.appendChild(text);
+  });
+
+  return group;
+}
+
+/**
+ * Create finger position labels using explicit positions (for irregular spacing)
+ */
+function createHorizontalFingerLabelsWithPositions(positions, cfg) {
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'finger-labels');
+
+  const labels = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'];
+  const y = cfg.height / 2 + cfg.holeRadius + 16;
+
+  labels.forEach((label, i) => {
+    const text = document.createElementNS(SVG_NS, 'text');
+    text.setAttribute('x', positions[i]);
+    text.setAttribute('y', y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '11');
+    text.setAttribute('font-family', 'Arial, sans-serif');
+    text.setAttribute('fill', '#888');
+    text.textContent = label;
+    group.appendChild(text);
+  });
+
+  return group;
+}
+
 // Export
-export { createBansuri, DEFAULT_CONFIG };
+export { createBansuri, createHorizontalBansuri, DEFAULT_CONFIG, HORIZONTAL_CONFIG };
