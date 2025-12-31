@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bansuri.js - MusicXML Import</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">
+        <span class="hamburger-icon">☰</span>
+      </button>
+      <h1 class="app-title">Bansuri.js - MusicXML</h1>
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+      <nav class="nav-dropdown" hidden>
+        <a href="index.html" class="nav-link">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Home</span>
+        </a>
+        <a href="piano.html" class="nav-link">
+          <span class="nav-icon">🎹</span>
+          <span class="nav-label">Piano</span>
+        </a>
+        <a href="midi.html" class="nav-link">
+          <span class="nav-icon">🎛️</span>
+          <span class="nav-label">MIDI</span>
+        </a>
+        <a href="musicxml.html" class="nav-link active" aria-current="page">
+          <span class="nav-icon">📄</span>
+          <span class="nav-label">MusicXML</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <!-- Bansuri Display -->
+      <section class="bansuri-section">
+        <div id="bansuri-display" class="bansuri-display"></div>
+      </section>
+
+      <!-- Controls with Note Info above -->
+      <section class="controls-section">
+        <div id="note-info" class="note-info"></div>
+        <div id="controls" class="controls"></div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p class="legend">
+        <span class="legend-item"><span class="hole closed"></span> Closed</span>
+        <span class="legend-item"><span class="hole open"></span> Open</span>
+        <span class="legend-item"><span class="hole half"></span> Half</span>
+      </p>
+    </footer>
+  </div>
+
+  <script type="module" src="js/theme.js"></script>
+  <script type="module" src="js/nav.js"></script>
+  <script type="module" src="js/main-musicxml.js"></script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+/**
+ * Bansuri.js - Input Handlers
+ * Handles various input methods: buttons, text, dropdown, piano keyboard
+ */
+
+import { NOTES, BANSURI_KEYS, getFingeringForNote, getFingeringForSargam, isPlayable, noteNameToMidi } from './fingering-data.js';
+
+// SVG namespace
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Create note buttons grid
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onNoteSelect - Callback when note is selected
+ * @param {object} options - Configuration options
+ * @returns {object} Controller object
+ */
+function createNoteButtons(container, onNoteSelect, options = {}) {
+  const { bansuriKey = 'G', octaveRange = [3, 5] } = options;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'note-buttons-container';
+
+  // Create buttons for each octave
+  for (let octave = octaveRange[0]; octave <= octaveRange[1]; octave++) {
+    const octaveDiv = document.createElement('div');
+    octaveDiv.className = 'note-buttons-octave';
+
+    const label = document.createElement('span');
+    label.className = 'octave-label';
+    label.textContent = `Octave ${octave}`;
+    octaveDiv.appendChild(label);
+
+    const buttonRow = document.createElement('div');
+    buttonRow.className = 'note-buttons-row';
+
+    NOTES.forEach(note => {
+      const noteName = `${note}${octave}`;
+      const midiNote = noteNameToMidi(noteName);
+      const playable = isPlayable(midiNote, bansuriKey);
+
+      const btn = document.createElement('button');
+      btn.className = 'note-button';
+      btn.textContent = note;
+      btn.dataset.note = noteName;
+      btn.dataset.midi = midiNote;
+
+      if (!playable) {
+        btn.classList.add('not-playable');
+        btn.disabled = true;
+        btn.title = 'Outside bansuri range';
+      }
+
+      if (note.includes('#')) {
+        btn.classList.add('sharp');
+      }
+
+      btn.addEventListener('click', () => {
+        if (playable) {
+          onNoteSelect(noteName, midiNote);
+          // Visual feedback
+          wrapper.querySelectorAll('.note-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        }
+      });
+
+      buttonRow.appendChild(btn);
+    });
+
+    octaveDiv.appendChild(buttonRow);
+    wrapper.appendChild(octaveDiv);
+  }
+
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    updatePlayableNotes(newBansuriKey) {
+      wrapper.querySelectorAll('.note-button').forEach(btn => {
+        const midiNote = parseInt(btn.dataset.midi);
+        const playable = isPlayable(midiNote, newBansuriKey);
+        btn.classList.toggle('not-playable', !playable);
+        btn.disabled = !playable;
+      });
+    },
+    clearSelection() {
+      wrapper.querySelectorAll('.note-button').forEach(b => b.classList.remove('active'));
+    }
+  };
+}
+
+/**
+ * Create text input for note names
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onNoteInput - Callback when note is entered
+ * @returns {object} Controller object
+ */
+function createTextInput(container, onNoteInput) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'text-input-container';
+
+  const label = document.createElement('label');
+  label.textContent = 'Enter note: ';
+  label.htmlFor = 'note-input';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'note-input';
+  input.className = 'note-text-input';
+  input.placeholder = 'e.g., G4, C#5, Sa, Komal Re';
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'submit-btn';
+  submitBtn.textContent = 'Show';
+
+  const errorSpan = document.createElement('span');
+  errorSpan.className = 'error-message';
+
+  const handleSubmit = () => {
+    const value = input.value.trim();
+    if (!value) return;
+
+    errorSpan.textContent = '';
+
+    // Try to parse as Western note first
+    let midiNote = noteNameToMidi(value);
+    if (midiNote !== null) {
+      onNoteInput(value, midiNote);
+      return;
+    }
+
+    // Try as Indian note
+    const fingering = getFingeringForSargam(value);
+    if (fingering) {
+      onNoteInput(value, fingering.midiNote);
+      return;
+    }
+
+    errorSpan.textContent = `Unknown note: ${value}`;
+  };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSubmit();
+  });
+
+  submitBtn.addEventListener('click', handleSubmit);
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  wrapper.appendChild(submitBtn);
+  wrapper.appendChild(errorSpan);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    setValue(value) {
+      input.value = value;
+    },
+    clear() {
+      input.value = '';
+      errorSpan.textContent = '';
+    }
+  };
+}
+
+/**
+ * Create bansuri key selector dropdown
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onKeyChange - Callback when key is changed
+ * @param {string} initialKey - Initial key selection
+ * @returns {object} Controller object
+ */
+function createKeySelector(container, onKeyChange, initialKey = 'G') {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'key-selector-container';
+
+  const label = document.createElement('label');
+  label.textContent = 'Bansuri Key: ';
+  label.htmlFor = 'bansuri-key';
+
+  const select = document.createElement('select');
+  select.id = 'bansuri-key';
+  select.className = 'key-selector';
+
+  // Add options for each key
+  Object.keys(BANSURI_KEYS).forEach(key => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key;
+    if (key === initialKey) option.selected = true;
+    select.appendChild(option);
+  });
+
+  select.addEventListener('change', () => {
+    onKeyChange(select.value);
+  });
+
+  // Add info text
+  const info = document.createElement('span');
+  info.className = 'key-info';
+  info.textContent = '(Sa = selected key)';
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(select);
+  wrapper.appendChild(info);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    getKey() {
+      return select.value;
+    },
+    setKey(key) {
+      if (BANSURI_KEYS[key]) {
+        select.value = key;
+      }
+    }
+  };
+}
+
+/**
+ * Create piano keyboard input
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onNoteSelect - Callback when note is selected
+ * @param {object} options - Configuration options
+ * @returns {object} Controller object
+ */
+function createPianoKeyboard(container, onNoteSelect, options = {}) {
+  const {
+    startOctave = 3,
+    numOctaves = 2,
+    bansuriKey = 'G',
+    width = 600,
+    height = 120
+  } = options;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'piano-keyboard-container';
+
+  // Create SVG
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  const whiteKeyWidth = width / (numOctaves * 7);
+  const blackKeyWidth = whiteKeyWidth * 0.6;
+  const blackKeyHeight = height * 0.6;
+
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('class', 'piano-keyboard');
+  svg.style.width = '100%';
+  svg.style.maxWidth = `${width}px`;
+
+  const keys = [];
+
+  // White keys first (so black keys render on top)
+  const whiteNotes = [0, 2, 4, 5, 7, 9, 11]; // C, D, E, F, G, A, B
+  const blackNotes = [1, 3, 6, 8, 10]; // C#, D#, F#, G#, A#
+
+  let whiteKeyIndex = 0;
+
+  for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+    whiteNotes.forEach((noteOffset, i) => {
+      const midiNote = (octave + 1) * 12 + noteOffset;
+      const x = whiteKeyIndex * whiteKeyWidth;
+      const playable = isPlayable(midiNote, bansuriKey);
+
+      const key = document.createElementNS(SVG_NS, 'rect');
+      key.setAttribute('x', x);
+      key.setAttribute('y', 0);
+      key.setAttribute('width', whiteKeyWidth - 1);
+      key.setAttribute('height', height);
+      key.setAttribute('fill', playable ? '#ffffff' : '#cccccc');
+      key.setAttribute('stroke', '#333');
+      key.setAttribute('stroke-width', 1);
+      key.setAttribute('class', 'piano-key white-key');
+      key.dataset.midi = midiNote;
+      key.dataset.note = NOTES[noteOffset] + octave;
+
+      if (!playable) {
+        key.classList.add('not-playable');
+      }
+
+      key.addEventListener('mousedown', () => {
+        if (playable) {
+          key.classList.add('active');
+          onNoteSelect(key.dataset.note, midiNote);
+        }
+      });
+
+      key.addEventListener('mouseup', () => key.classList.remove('active'));
+      key.addEventListener('mouseleave', () => key.classList.remove('active'));
+
+      svg.appendChild(key);
+      keys.push({ element: key, midiNote, isBlack: false });
+
+      whiteKeyIndex++;
+    });
+  }
+
+  // Black keys
+  whiteKeyIndex = 0;
+  for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+    const blackKeyPositions = [0, 1, 3, 4, 5]; // Positions after C, D, F, G, A
+
+    blackKeyPositions.forEach((pos, i) => {
+      const noteOffset = blackNotes[i];
+      const midiNote = (octave + 1) * 12 + noteOffset;
+      const x = (whiteKeyIndex + pos + 1) * whiteKeyWidth - blackKeyWidth / 2;
+      const playable = isPlayable(midiNote, bansuriKey);
+
+      const key = document.createElementNS(SVG_NS, 'rect');
+      key.setAttribute('x', x);
+      key.setAttribute('y', 0);
+      key.setAttribute('width', blackKeyWidth);
+      key.setAttribute('height', blackKeyHeight);
+      key.setAttribute('fill', playable ? '#333333' : '#666666');
+      key.setAttribute('stroke', '#000');
+      key.setAttribute('stroke-width', 1);
+      key.setAttribute('class', 'piano-key black-key');
+      key.dataset.midi = midiNote;
+      key.dataset.note = NOTES[noteOffset] + octave;
+
+      if (!playable) {
+        key.classList.add('not-playable');
+      }
+
+      key.addEventListener('mousedown', () => {
+        if (playable) {
+          key.classList.add('active');
+          onNoteSelect(key.dataset.note, midiNote);
+        }
+      });
+
+      key.addEventListener('mouseup', () => key.classList.remove('active'));
+      key.addEventListener('mouseleave', () => key.classList.remove('active'));
+
+      svg.appendChild(key);
+      keys.push({ element: key, midiNote, isBlack: true });
+    });
+
+    whiteKeyIndex += 7;
+  }
+
+  wrapper.appendChild(svg);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    svg,
+    keys,
+    updatePlayableNotes(newBansuriKey) {
+      keys.forEach(({ element, midiNote, isBlack }) => {
+        const playable = isPlayable(midiNote, newBansuriKey);
+        element.classList.toggle('not-playable', !playable);
+
+        if (isBlack) {
+          element.setAttribute('fill', playable ? '#333333' : '#666666');
+        } else {
+          element.setAttribute('fill', playable ? '#ffffff' : '#cccccc');
+        }
+      });
+    },
+    highlightKey(midiNote) {
+      keys.forEach(({ element, midiNote: keyMidi }) => {
+        element.classList.toggle('highlighted', keyMidi === midiNote);
+      });
+    },
+    clearHighlight() {
+      keys.forEach(({ element }) => element.classList.remove('highlighted'));
+    }
+  };
+}
+
+/**
+ * Create Indian note (Sargam) buttons
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onNoteSelect - Callback when note is selected
+ * @returns {object} Controller object
+ */
+function createSargamButtons(container, onNoteSelect) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'sargam-buttons-container';
+
+  const notes = [
+    { name: 'Sa', label: 'Sa', komal: false },
+    { name: 'Komal Re', label: 're', komal: true },
+    { name: 'Re', label: 'Re', komal: false },
+    { name: 'Komal Ga', label: 'ga', komal: true },
+    { name: 'Ga', label: 'Ga', komal: false },
+    { name: 'Ma', label: 'Ma', komal: false },
+    { name: 'Tivra Ma', label: 'Ma\'', komal: false, tivra: true },
+    { name: 'Pa', label: 'Pa', komal: false },
+    { name: 'Komal Dha', label: 'dha', komal: true },
+    { name: 'Dha', label: 'Dha', komal: false },
+    { name: 'Komal Ni', label: 'ni', komal: true },
+    { name: 'Ni', label: 'Ni', komal: false }
+  ];
+
+  notes.forEach(({ name, label, komal, tivra }) => {
+    const btn = document.createElement('button');
+    btn.className = 'sargam-button';
+    btn.textContent = label;
+    btn.title = name;
+    btn.dataset.sargam = name;
+
+    if (komal) btn.classList.add('komal');
+    if (tivra) btn.classList.add('tivra');
+
+    btn.addEventListener('click', () => {
+      wrapper.querySelectorAll('.sargam-button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onNoteSelect(name);
+    });
+
+    wrapper.appendChild(btn);
+  });
+
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    clearSelection() {
+      wrapper.querySelectorAll('.sargam-button').forEach(b => b.classList.remove('active'));
+    }
+  };
+}
+
+/**
+ * Create octave selector for Sargam input
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onChange - Callback when octave changes
+ * @returns {object} Controller object
+ */
+function createOctaveSelector(container, onChange) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'octave-selector-container';
+
+  const label = document.createElement('label');
+  label.textContent = 'Octave: ';
+
+  const buttons = [];
+  const octaves = [
+    { value: -1, label: 'Low (Mandra)' },
+    { value: 0, label: 'Mid (Madhya)' },
+    { value: 1, label: 'High (Taar)' }
+  ];
+
+  octaves.forEach(({ value, label: text }, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'octave-button';
+    btn.textContent = text;
+    btn.dataset.octave = value;
+
+    if (i === 1) btn.classList.add('active'); // Middle octave default
+
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(value);
+    });
+
+    buttons.push(btn);
+    wrapper.appendChild(btn);
+  });
+
+  wrapper.insertBefore(label, wrapper.firstChild);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    getOctave() {
+      const active = wrapper.querySelector('.octave-button.active');
+      return active ? parseInt(active.dataset.octave) : 0;
+    },
+    setOctave(value) {
+      buttons.forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.octave) === value);
+      });
+    }
+  };
+}
+
+// Export
+export {
+  createNoteButtons,
+  createTextInput,
+  createKeySelector,
+  createPianoKeyboard,
+  createSargamButtons,
+  createOctaveSelector
+};

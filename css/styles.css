@@ -1,0 +1,788 @@
+/**
+ * Bansuri.js - Styles
+ * With theme toggle support and compact layout
+ */
+
+/* ===== Theme Variables ===== */
+:root {
+  --border-radius: 6px;
+  --transition-speed: 0.2s;
+}
+
+/* Dark theme (default) */
+[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --text-primary: #eee;
+  --text-secondary: #aaa;
+  --accent-primary: #e94560;
+  --accent-secondary: #0f3460;
+  --bamboo-light: #deb887;
+  --bamboo-dark: #8b4513;
+  --success: #4caf50;
+  --warning: #ffc107;
+  --error: #f44336;
+  /* High contrast hole colors for dark mode */
+  --hole-closed: #8B4513;
+  --hole-open: #1a1a1a;
+  --hole-open-stroke: #666;
+  --hole-half-top: #8B4513;
+  --hole-half-bottom: #1a1a1a;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --bg-primary: #f0f0f0;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e0e0e0;
+  --text-primary: #222;
+  --text-secondary: #555;
+  --accent-primary: #d63050;
+  --accent-secondary: #e8e8e8;
+  --bamboo-light: #deb887;
+  --bamboo-dark: #8b4513;
+  --success: #2e7d32;
+  --warning: #f57c00;
+  --error: #c62828;
+  /* High contrast hole colors for light mode */
+  --hole-closed: #5D3A1A;
+  --hole-open: #f5f5f5;
+  --hole-open-stroke: #333;
+  --hole-half-top: #5D3A1A;
+  --hole-half-bottom: #f5f5f5;
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ===== App Container ===== */
+.app-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+/* ===== Header with Navigation ===== */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.app-title {
+  font-size: 1.3rem;
+  color: var(--accent-primary);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* Hamburger Button */
+.hamburger-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  color: var(--text-primary);
+  border-radius: var(--border-radius);
+  transition: background var(--transition-speed);
+}
+
+.hamburger-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.hamburger-btn.open {
+  background: var(--bg-tertiary);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: var(--border-radius);
+  transition: background var(--transition-speed);
+}
+
+.theme-toggle:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Navigation Dropdown */
+.nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  margin-top: 5px;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background var(--transition-speed);
+}
+
+.nav-link:hover {
+  background: var(--bg-tertiary);
+}
+
+.nav-link.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+}
+
+/* ===== Main Layout ===== */
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Desktop: Side by side with vertical flute */
+@media (min-width: 768px) {
+  .app-main {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 15px;
+    align-items: start;
+    min-height: 520px;
+  }
+
+  .bansuri-section {
+    position: sticky;
+    top: 10px;
+    height: fit-content;
+  }
+}
+
+/* ===== Bansuri Display Section ===== */
+.bansuri-section {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bansuri-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bansuri-svg {
+  filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.3));
+  height: 450px;
+  width: auto;
+}
+
+/* Mobile: Shorter bansuri */
+@media (max-width: 767px) {
+  .bansuri-svg {
+    height: 280px;
+  }
+}
+
+/* ===== High Contrast Hole States ===== */
+.bansuri-hole-circle {
+  transition: fill var(--transition-speed) ease;
+  cursor: pointer;
+}
+
+.bansuri-hole-circle.highlighted {
+  stroke: var(--accent-primary);
+  stroke-width: 3;
+}
+
+.bansuri-hole-circle.hole-closed {
+  fill: var(--hole-closed);
+}
+
+.bansuri-hole-circle.hole-open {
+  fill: var(--hole-open);
+  stroke: var(--hole-open-stroke);
+  stroke-width: 2;
+}
+
+.bansuri-hole-circle.hole-half {
+  fill: url(#halfHoleGradient);
+  stroke: var(--hole-open-stroke);
+  stroke-width: 2;
+}
+
+/* ===== Note Info Display (above controls) ===== */
+.note-info {
+  margin-bottom: 12px;
+}
+
+.note-info-display {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+}
+
+.note-info-display > div {
+  text-align: center;
+  min-width: 70px;
+}
+
+.note-info-display .label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.note-info-display .value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--accent-primary);
+}
+
+/* ===== Controls Section ===== */
+.controls-section {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 12px;
+}
+
+.control-section {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.control-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.section-header {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== Key Selector ===== */
+.key-selector-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.key-selector {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.key-info {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* ===== Volume & Waveform Controls ===== */
+.volume-control,
+.waveform-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.volume-slider {
+  width: 100px;
+  cursor: pointer;
+}
+
+.volume-value {
+  min-width: 35px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.waveform-select {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--bg-tertiary);
+}
+
+/* ===== Note Buttons (Compact) ===== */
+.note-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-buttons-octave {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.octave-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.note-buttons-row {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.note-button {
+  padding: 6px 8px;
+  min-width: 32px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.note-button:hover:not(:disabled) {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.note-button.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.note-button.sharp {
+  background: var(--bg-primary);
+}
+
+.note-button.not-playable {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ===== Piano Keyboard ===== */
+.piano-keyboard-container {
+  overflow-x: auto;
+  padding: 5px 0;
+}
+
+.piano-keyboard {
+  display: block;
+}
+
+.piano-key {
+  cursor: pointer;
+  transition: fill var(--transition-speed);
+}
+
+.piano-key.white-key:hover:not(.not-playable) {
+  fill: #d0d0d0;
+}
+
+.piano-key.black-key:hover:not(.not-playable) {
+  fill: #555;
+}
+
+.piano-key.active {
+  fill: var(--accent-primary) !important;
+}
+
+.piano-key.highlighted {
+  fill: var(--warning) !important;
+}
+
+.piano-key.not-playable {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ===== Sargam Buttons (Compact) ===== */
+.sargam-buttons-container {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sargam-button {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.sargam-button:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.sargam-button.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.sargam-button.komal {
+  background: var(--bg-primary);
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+.sargam-button.tivra {
+  border: 2px solid var(--warning);
+}
+
+/* ===== Octave Selector ===== */
+.octave-selector-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.octave-button {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.octave-button:hover {
+  background: var(--accent-secondary);
+}
+
+.octave-button.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* ===== Text Input ===== */
+.text-input-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.note-text-input {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  width: 150px;
+}
+
+.note-text-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.submit-btn {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--accent-primary);
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.submit-btn:hover {
+  opacity: 0.9;
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.8rem;
+}
+
+/* ===== MIDI Status ===== */
+.midi-status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.midi-status-container.available {
+  border-left: 3px solid var(--success);
+}
+
+.midi-status-container.unavailable {
+  border-left: 3px solid var(--error);
+}
+
+.midi-status-icon {
+  font-size: 1.2rem;
+}
+
+.midi-status-text {
+  color: var(--text-secondary);
+}
+
+.midi-inputs-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.midi-input-item {
+  padding: 3px 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* ===== MusicXML Input ===== */
+.musicxml-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.file-input-label {
+  color: var(--text-secondary);
+}
+
+.musicxml-file-input {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.musicxml-status {
+  font-size: 0.8rem;
+}
+
+.musicxml-status.loading { color: var(--warning); }
+.musicxml-status.success { color: var(--success); }
+.musicxml-status.error { color: var(--error); }
+
+/* ===== Note Sequencer ===== */
+.note-sequencer-container {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+}
+
+.sequencer-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.seq-btn {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.seq-btn:hover {
+  background: var(--accent-secondary);
+}
+
+.seq-btn.play-btn {
+  background: var(--success);
+  color: white;
+}
+
+.seq-btn.stop-btn {
+  background: var(--error);
+  color: white;
+}
+
+.sequencer-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.progress-text {
+  min-width: 50px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  transition: width 0.3s ease;
+}
+
+.current-note-display {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--accent-primary);
+  min-height: 2rem;
+}
+
+/* ===== Footer ===== */
+.app-footer {
+  text-align: center;
+  padding: 15px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hole {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--bamboo-dark);
+}
+
+.hole.closed {
+  background: var(--hole-closed);
+}
+
+.hole.open {
+  background: var(--hole-open);
+  border-color: var(--hole-open-stroke);
+}
+
+.hole.half {
+  background: linear-gradient(to bottom, var(--hole-half-top) 50%, var(--hole-half-bottom) 50%);
+}
+
+/* ===== Mobile: Sticky Bansuri ===== */
+@media (max-width: 767px) {
+  .bansuri-section {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin: -10px -10px 10px -10px;
+    border-radius: 0;
+    padding: 8px;
+  }
+
+  .app-header {
+    margin: -10px -10px 10px -10px;
+    border-radius: 0;
+  }
+}
+
+/* ===== Animations ===== */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.loading {
+  animation: pulse 1s infinite;
+}
+
+/* ===== Focus States for Accessibility ===== */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
