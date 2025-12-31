@@ -816,8 +816,38 @@ input:focus-visible {
 
 .settings-bar .key-selector-container,
 .settings-bar .volume-control,
-.settings-bar .waveform-control {
+.settings-bar .waveform-control,
+.settings-bar .half-notes-toggle {
   margin: 0;
+}
+
+/* Half notes toggle */
+.half-notes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.toggle-btn {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-speed);
+}
+
+.toggle-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* Hidden half notes - use visibility to maintain layout */
+.note-cell.half-note-hidden {
+  visibility: hidden;
 }
 
 /* Note grid section - compact, no extra space */

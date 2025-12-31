@@ -667,6 +667,23 @@ function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
     clearSelection() {
       allSargamButtons.forEach(b => b.classList.remove('active'));
       allWesternButtons.forEach(b => b.classList.remove('active'));
+    },
+
+    setHalfNotesVisible(visible) {
+      // Toggle visibility on komal and tivra notes
+      // Use visibility: hidden to maintain layout
+      allSargamButtons.forEach(btn => {
+        if (btn.classList.contains('komal') || btn.classList.contains('tivra')) {
+          btn.classList.toggle('half-note-hidden', !visible);
+        }
+      });
+      allWesternButtons.forEach((btn, i) => {
+        // Western buttons don't have komal/tivra classes, so check corresponding sargam button
+        const sargamBtn = allSargamButtons[i];
+        if (sargamBtn && (sargamBtn.classList.contains('komal') || sargamBtn.classList.contains('tivra'))) {
+          btn.classList.toggle('half-note-hidden', !visible);
+        }
+      });
     }
   };
 }

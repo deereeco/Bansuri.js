@@ -53,8 +53,9 @@ Creates SVG visualization of the bansuri in two orientations:
 
 **Horizontal (used on index.html home page):**
 - `createHorizontalBansuri()` - 6 holes arranged left-to-right, blowhole on left
-- Larger display, positioned at bottom of page
-- Octave indicator on right side
+- Larger display, positioned at bottom of page, scales to fill container width
+- Holes positioned toward right side with 1.5x spacing between R2-R3 (anatomically natural)
+- No octave indicator (removed for cleaner display)
 
 Common features:
 - 6 finger holes (labeled L1-L3 for left hand, R1-R3 for right hand)
@@ -89,7 +90,11 @@ All modes share the fingering-data core.
 ### Input Handlers (js/input-handlers.js)
 
 Reusable UI component factory functions:
-- `createCombinedNoteGrid()` - Two-row grid: fixed Sargam notes on top, dynamic Western notes below (updates when key changes). Range: Mandra Pa to Taar Pa (semitones 7-31)
+- `createCombinedNoteGrid()` - Two-row grid with saptak (octave) groupings:
+  - Three labeled groups: Mandra (Pa–Ni), Madhya (Sa–Ni), Taar (Sa–Pa)
+  - Fixed Sargam notes on top row, dynamic Western notes below (updates when key changes)
+  - Range: Mandra Pa to Taar Pa (semitones 7-31, 25 chromatic notes)
+  - `setHalfNotesVisible(boolean)` - Toggle visibility of komal/tivra notes (uses CSS visibility to maintain layout)
 - `createNoteButtons()` - Western note grid (C3-B5 range) - used by piano/midi/musicxml pages
 - `createSargamButtons()` - Indian note buttons (Sa, Re, Ga, etc.)
 - `createOctaveSelector()` - Mandra/Madhya/Taar selector for Sargam input
@@ -124,13 +129,22 @@ Each main module maintains application state in a `state` object:
 const state = {
   bansuriKey: 'G',           // Current bansuri key
   currentFingering: null,    // Last displayed fingering
-  audioEnabled: true         // Audio playback toggle
+  audioEnabled: true,        // Audio playback toggle
+  showHalfNotes: true        // Show/hide chromatic (komal/tivra) notes
 };
 ```
 
 The home page (main.js) uses a fixed range (Mandra Pa to Taar Pa) so no octave selector is needed. Other pages may include `currentOctaveOffset` for Sargam input.
 
-Preferences (key, volume, waveform) are persisted to localStorage on change.
+Preferences (key, volume, waveform, showHalfNotes) are persisted to localStorage on change.
+
+### Settings Bar (Home Page)
+
+The settings bar includes:
+- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels)
+- **Scale toggle** - "All Notes" shows all 12 chromatic notes, "Major Only" hides komal/tivra notes while maintaining layout
+- **Volume slider** - Audio playback volume
+- **Sound selector** - Waveform type (Sine, Flute/Triangle, Bright/Sawtooth, Hollow/Square)
 
 ## Web APIs Used
 

@@ -12,7 +12,8 @@ import { createKeySelector, createCombinedNoteGrid } from './input-handlers.js';
 const state = {
   bansuriKey: 'G',
   currentFingering: null,
-  audioEnabled: true
+  audioEnabled: true,
+  showHalfNotes: true
 };
 
 // UI Components
@@ -73,17 +74,52 @@ function initAudioOnce() {
 }
 
 /**
- * Create settings bar (key selector, volume, waveform)
+ * Create settings bar (key selector, volume, waveform, half notes toggle)
  */
 function createSettingsBar(container) {
   // Key selector
   keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
+
+  // Half notes toggle
+  createHalfNotesToggle(container);
 
   // Volume control
   createVolumeControl(container);
 
   // Waveform control
   createWaveformControl(container);
+}
+
+/**
+ * Create half notes visibility toggle
+ */
+function createHalfNotesToggle(container) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'half-notes-toggle';
+
+  const label = document.createElement('label');
+  label.textContent = 'Scale: ';
+
+  const btn = document.createElement('button');
+  btn.className = 'toggle-btn';
+  btn.textContent = state.showHalfNotes ? 'All Notes' : 'Major Only';
+  btn.title = 'Toggle between all chromatic notes and major scale only';
+
+  btn.addEventListener('click', () => {
+    state.showHalfNotes = !state.showHalfNotes;
+    btn.textContent = state.showHalfNotes ? 'All Notes' : 'Major Only';
+
+    if (combinedNoteGrid) {
+      combinedNoteGrid.setHalfNotesVisible(state.showHalfNotes);
+    }
+    savePreferences();
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(btn);
+  container.appendChild(wrapper);
+
+  return wrapper;
 }
 
 /**
@@ -268,7 +304,8 @@ function handleKeyChange(newKey) {
 function savePreferences() {
   const prefs = {
     bansuriKey: state.bansuriKey,
-    volume: getVolume()
+    volume: getVolume(),
+    showHalfNotes: state.showHalfNotes
   };
 
   try {
@@ -298,6 +335,17 @@ function loadPreferences() {
       }
       if (typeof prefs.volume === 'number') {
         setVolume(prefs.volume);
+      }
+      if (typeof prefs.showHalfNotes === 'boolean') {
+        state.showHalfNotes = prefs.showHalfNotes;
+        if (combinedNoteGrid) {
+          combinedNoteGrid.setHalfNotesVisible(prefs.showHalfNotes);
+        }
+        // Update button text if it exists
+        const toggleBtn = document.querySelector('.half-notes-toggle .toggle-btn');
+        if (toggleBtn) {
+          toggleBtn.textContent = prefs.showHalfNotes ? 'All Notes' : 'Major Only';
+        }
       }
     }
   } catch (e) {
