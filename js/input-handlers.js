@@ -198,7 +198,7 @@ function createKeySelector(container, onKeyChange, initialKey = 'G') {
   // Add info text
   const info = document.createElement('span');
   info.className = 'key-info';
-  info.textContent = '(Sa = selected key)';
+  info.textContent = '= Sa';
 
   wrapper.appendChild(label);
   wrapper.appendChild(select);
@@ -480,7 +480,7 @@ function createOctaveSelector(container, onChange) {
 
 /**
  * Create combined Sargam/Western note grid with saptak groupings
- * Three groups: Mandra (Pa-Ni), Madhya (Sa-Ni), Taar (Sa-Pa)
+ * Three groups: Mandra, Madhya, Taar
  * @param {HTMLElement} container - Container element
  * @param {Function} onNoteSelect - Callback when note is selected
  * @param {object} options - Configuration options
@@ -493,7 +493,7 @@ function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
   const SAPTAK_GROUPS = [
     {
       name: 'Mandra',
-      label: 'Mandra (Pa–Ni)',
+      label: 'Mandra',
       notes: [
         { semitone: 7, sargam: 'Pa', label: 'Pa' },
         { semitone: 8, sargam: 'Komal Dha', label: 'dha', komal: true },
@@ -504,7 +504,7 @@ function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
     },
     {
       name: 'Madhya',
-      label: 'Madhya (Sa–Ni)',
+      label: 'Madhya',
       notes: [
         { semitone: 12, sargam: 'Sa', label: 'Sa' },
         { semitone: 13, sargam: 'Komal Re', label: 're', komal: true },
@@ -522,7 +522,7 @@ function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
     },
     {
       name: 'Taar',
-      label: 'Taar (Sa–Pa)',
+      label: 'Taar',
       notes: [
         { semitone: 24, sargam: 'Sa', label: 'Sa' },
         { semitone: 25, sargam: 'Komal Re', label: 're', komal: true },

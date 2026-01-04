@@ -13,7 +13,7 @@ const state = {
   bansuriKey: 'G',
   currentFingering: null,
   audioEnabled: true,
-  showHalfNotes: true
+  showHalfNotes: false
 };
 
 // UI Components
