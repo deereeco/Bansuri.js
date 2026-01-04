@@ -40,7 +40,7 @@ const FINGERING_PATTERNS = {
   2:  { holes: [CLOSED, CLOSED, OPEN, OPEN, OPEN, OPEN], indian: SARGAM.RE },             // Re - Major 2nd
   3:  { holes: [CLOSED, HALF, OPEN, OPEN, OPEN, OPEN], indian: SARGAM.KOMAL_GA },         // Komal Ga - minor 3rd
   4:  { holes: [CLOSED, OPEN, OPEN, OPEN, OPEN, OPEN], indian: SARGAM.GA },               // Ga - Major 3rd
-  5:  { holes: [CLOSED, CLOSED, CLOSED, HALF, OPEN, OPEN], indian: SARGAM.MA },           // Shuddh Ma - Perfect 4th
+  5:  { holes: [HALF, OPEN, OPEN, OPEN, OPEN, OPEN], indian: SARGAM.MA },           // Shuddh Ma - Perfect 4th
   6:  { holes: [OPEN, OPEN, OPEN, OPEN, OPEN, OPEN], indian: SARGAM.TIVRA_MA },           // Tivra Ma - Augmented 4th
   7:  { holes: [CLOSED, CLOSED, CLOSED, CLOSED, CLOSED, CLOSED], indian: SARGAM.PA },     // Pa - Perfect 5th
   8:  { holes: [CLOSED, CLOSED, CLOSED, CLOSED, CLOSED, HALF], indian: SARGAM.KOMAL_DHA },// Komal Dha - minor 6th
