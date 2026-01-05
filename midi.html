@@ -43,7 +43,28 @@
       <!-- Controls with Note Info above -->
       <section class="controls-section">
         <div id="note-info" class="note-info"></div>
-        <div id="controls" class="controls"></div>
+
+        <!-- Shared Controls (Key, Volume, Waveform) -->
+        <div id="shared-controls" class="shared-controls"></div>
+
+        <!-- Tabbed Interface -->
+        <div class="tab-container">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="device">Device Input</button>
+            <button class="tab-btn" data-tab="file">File Import</button>
+          </div>
+
+          <div class="tab-content active" id="tab-device">
+            <div id="midi-status" class="midi-status"></div>
+            <div id="note-buttons" class="note-buttons"></div>
+          </div>
+
+          <div class="tab-content" id="tab-file">
+            <div id="file-input-container" class="file-input-container"></div>
+            <div id="tempo-control-container" class="tempo-control-container"></div>
+            <div id="sequencer-container" class="sequencer-container"></div>
+          </div>
+        </div>
       </section>
     </main>
 

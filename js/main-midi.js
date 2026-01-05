@@ -8,26 +8,32 @@ import { createBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
 import { createKeySelector } from './input-handlers.js';
 import { initMidi, onNoteOn, onNoteOff, createMidiStatusDisplay } from './midi-handler.js';
+import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer } from './midi-file-parser.js';
 
 // Application state
 const state = {
   bansuriKey: 'G',
   currentFingering: null,
-  audioEnabled: true
+  audioEnabled: true,
+  activeTab: 'device',
+  isFilePlayback: false,
+  midiData: null
 };
 
 // UI Components
 let bansuri = null;
 let keySelector = null;
 let midiStatus = null;
+let sequencer = null;
+let audioEngineRef = null;
 
 /**
  * Initialize the application
  */
 function init() {
   const bansuriContainer = document.getElementById('bansuri-display');
-  const controlsContainer = document.getElementById('controls');
   const noteInfoContainer = document.getElementById('note-info');
+  const sharedControlsContainer = document.getElementById('shared-controls');
 
   if (!bansuriContainer) {
     console.error('Bansuri container not found');
@@ -37,15 +43,24 @@ function init() {
   // Create bansuri SVG
   bansuri = createBansuri(bansuriContainer);
 
-  // Create controls
-  if (controlsContainer) {
-    createControls(controlsContainer);
-  }
-
   // Create note info display
   if (noteInfoContainer) {
     createNoteInfo(noteInfoContainer);
   }
+
+  // Create shared controls
+  if (sharedControlsContainer) {
+    createSharedControls(sharedControlsContainer);
+  }
+
+  // Initialize tab switching
+  initTabSwitching();
+
+  // Initialize device tab
+  initDeviceTab();
+
+  // Initialize file tab
+  initFileTab();
 
   // Initialize audio on first interaction
   document.addEventListener('click', initAudioOnce, { once: true });
@@ -65,31 +80,137 @@ function init() {
 }
 
 function initAudioOnce() {
-  initAudio();
+  const engine = initAudio();
+  audioEngineRef = { playMidi, stopNote, setVolume, getVolume };
 }
 
 /**
- * Create control panel
+ * Create shared controls (Key, Volume, Waveform)
  */
-function createControls(container) {
-  // Settings section
+function createSharedControls(container) {
   const settingsSection = createSection(container, 'Settings');
   keySelector = createKeySelector(settingsSection, handleKeyChange, state.bansuriKey);
   createVolumeControl(settingsSection);
   createWaveformControl(settingsSection);
+}
 
-  // MIDI section
-  const midiSection = createSection(container, 'MIDI Device');
-  midiStatus = createMidiStatusDisplay(midiSection);
+/**
+ * Initialize tab switching functionality
+ */
+function initTabSwitching() {
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
 
-  // Instructions
-  const instructions = document.createElement('div');
-  instructions.className = 'midi-instructions';
-  instructions.innerHTML = `
-    <p>Connect a MIDI device (keyboard, controller) to use this page.</p>
-    <p>Play notes on your MIDI device to see the corresponding bansuri fingerings.</p>
-  `;
-  midiSection.appendChild(instructions);
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabName = button.dataset.tab;
+
+      // Update active tab state
+      state.activeTab = tabName;
+
+      // Update button states
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      // Update content visibility
+      tabContents.forEach(content => {
+        if (content.id === `tab-${tabName}`) {
+          content.classList.add('active');
+        } else {
+          content.classList.remove('active');
+        }
+      });
+
+      // Stop file playback when switching away from file tab
+      if (tabName === 'device' && sequencer) {
+        sequencer.stop();
+        state.isFilePlayback = false;
+      }
+    });
+  });
+}
+
+/**
+ * Initialize device input tab
+ */
+function initDeviceTab() {
+  const midiStatusContainer = document.getElementById('midi-status');
+  const noteButtonsContainer = document.getElementById('note-buttons');
+
+  if (midiStatusContainer) {
+    midiStatus = createMidiStatusDisplay(midiStatusContainer);
+
+    const instructions = document.createElement('div');
+    instructions.className = 'midi-instructions';
+    instructions.innerHTML = `
+      <p>Connect a MIDI device (keyboard, controller) to use this tab.</p>
+      <p>Play notes on your MIDI device to see the corresponding bansuri fingerings.</p>
+    `;
+    midiStatusContainer.appendChild(instructions);
+  }
+}
+
+/**
+ * Initialize file import tab
+ */
+function initFileTab() {
+  const fileInputContainer = document.getElementById('file-input-container');
+  const tempoControlContainer = document.getElementById('tempo-control-container');
+  const sequencerContainer = document.getElementById('sequencer-container');
+
+  // Create file input
+  if (fileInputContainer) {
+    createMIDIFileInput(fileInputContainer, handleMIDIFileParsed);
+  }
+
+  // Create tempo control
+  if (tempoControlContainer) {
+    createTempoControl(tempoControlContainer, handleTempoChange);
+  }
+
+  // Create sequencer
+  if (sequencerContainer) {
+    sequencer = createTimedNoteSequencer(
+      sequencerContainer,
+      handleSequencerNoteChange,
+      audioEngineRef
+    );
+  }
+}
+
+/**
+ * Handle MIDI file parsed
+ */
+function handleMIDIFileParsed(midiData) {
+  state.midiData = midiData;
+  if (sequencer) {
+    sequencer.setNotes(midiData.notes);
+  }
+}
+
+/**
+ * Handle tempo multiplier change
+ */
+function handleTempoChange(multiplier) {
+  if (sequencer) {
+    sequencer.setTempoMultiplier(multiplier);
+  }
+}
+
+/**
+ * Handle sequencer note change
+ */
+function handleSequencerNoteChange(noteData) {
+  const fingering = getFingeringForMidi(noteData.midiNote, state.bansuriKey);
+
+  if (fingering) {
+    state.currentFingering = fingering;
+    bansuri.setFingering(fingering);
+    updateNoteInfo(fingering);
+  }
+
+  // Update playback state
+  state.isFilePlayback = sequencer ? sequencer.isPlaying() : false;
 }
 
 function createSection(container, title) {
@@ -217,6 +338,9 @@ function updateNoteInfo(fingering) {
  */
 function setupMidiHandlers() {
   onNoteOn(({ note, velocity }) => {
+    // Block device input during file playback
+    if (state.isFilePlayback) return;
+
     const fingering = getFingeringForMidi(note, state.bansuriKey);
 
     if (fingering) {
@@ -231,6 +355,9 @@ function setupMidiHandlers() {
   });
 
   onNoteOff(({ note }) => {
+    // Block device input during file playback
+    if (state.isFilePlayback) return;
+
     stopNote();
   });
 }
