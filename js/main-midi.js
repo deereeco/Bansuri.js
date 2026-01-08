@@ -4,7 +4,7 @@
  */
 
 import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
-import { createBansuri } from './bansuri-svg.js';
+import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
 import { createKeySelector } from './input-handlers.js';
 import { initMidi, onNoteOn, onNoteOff, createMidiStatusDisplay } from './midi-handler.js';
@@ -25,32 +25,39 @@ let bansuri = null;
 let keySelector = null;
 let midiStatus = null;
 let sequencer = null;
-let audioEngineRef = null;
+
+// Audio engine reference that wraps audio functions
+// This object is created immediately so sequencer can use it,
+// but the functions it calls will initialize audio on first use
+const audioEngineRef = {
+  playMidi: (note, duration) => playMidi(note, duration),
+  stopNote: () => stopNote()
+};
 
 /**
  * Initialize the application
  */
 function init() {
   const bansuriContainer = document.getElementById('bansuri-display');
+  const settingsContainer = document.getElementById('settings-bar');
   const noteInfoContainer = document.getElementById('note-info');
-  const sharedControlsContainer = document.getElementById('shared-controls');
 
   if (!bansuriContainer) {
     console.error('Bansuri container not found');
     return;
   }
 
-  // Create bansuri SVG
-  bansuri = createBansuri(bansuriContainer);
+  // Create horizontal bansuri SVG
+  bansuri = createHorizontalBansuri(bansuriContainer);
+
+  // Create settings bar
+  if (settingsContainer) {
+    createSettingsBar(settingsContainer);
+  }
 
   // Create note info display
   if (noteInfoContainer) {
     createNoteInfo(noteInfoContainer);
-  }
-
-  // Create shared controls
-  if (sharedControlsContainer) {
-    createSharedControls(sharedControlsContainer);
   }
 
   // Initialize tab switching
@@ -63,8 +70,8 @@ function init() {
   initFileTab();
 
   // Initialize audio on first interaction
-  document.addEventListener('click', initAudioOnce, { once: true });
-  document.addEventListener('keydown', initAudioOnce, { once: true });
+  document.addEventListener('click', () => initAudio(), { once: true });
+  document.addEventListener('keydown', () => initAudio(), { once: true });
 
   // Initialize MIDI
   initMidi().then(available => {
@@ -76,22 +83,21 @@ function init() {
   // Load saved preferences
   loadPreferences();
 
-  console.log('Bansuri.js MIDI page initialized');
-}
-
-function initAudioOnce() {
-  const engine = initAudio();
-  audioEngineRef = { playMidi, stopNote, setVolume, getVolume };
+  console.log('Bansuri.js MIDI page initialized (horizontal layout)');
 }
 
 /**
- * Create shared controls (Key, Volume, Waveform)
+ * Create settings bar (key selector, volume, waveform)
  */
-function createSharedControls(container) {
-  const settingsSection = createSection(container, 'Settings');
-  keySelector = createKeySelector(settingsSection, handleKeyChange, state.bansuriKey);
-  createVolumeControl(settingsSection);
-  createWaveformControl(settingsSection);
+function createSettingsBar(container) {
+  // Key selector
+  keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
+
+  // Volume control
+  createVolumeControl(container);
+
+  // Waveform control
+  createWaveformControl(container);
 }
 
 /**
@@ -213,20 +219,6 @@ function handleSequencerNoteChange(noteData) {
   state.isFilePlayback = sequencer ? sequencer.isPlaying() : false;
 }
 
-function createSection(container, title) {
-  const section = document.createElement('div');
-  section.className = 'control-section';
-
-  const header = document.createElement('h3');
-  header.className = 'section-header';
-  header.textContent = title;
-
-  section.appendChild(header);
-  container.appendChild(section);
-
-  return section;
-}
-
 function createVolumeControl(container) {
   const wrapper = document.createElement('div');
   wrapper.className = 'volume-control';
@@ -270,10 +262,10 @@ function createWaveformControl(container) {
 
   const waveforms = getWaveformTypes();
   const labels = {
-    'sine': 'Sine (Pure)',
-    'triangle': 'Triangle (Flute-like)',
-    'sawtooth': 'Sawtooth (Bright)',
-    'square': 'Square (Hollow)'
+    'sine': 'Sine',
+    'triangle': 'Flute',
+    'sawtooth': 'Bright',
+    'square': 'Hollow'
   };
 
   waveforms.forEach(wf => {

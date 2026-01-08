@@ -1,55 +1,71 @@
 /**
- * Bansuri.js - Audio Engine
- * Uses Web Audio API to generate reference tones for notes
+ * Bansuri.js - Audio Engine (Tone.js)
+ * Uses Tone.js to generate flute-like tones with envelope
  */
 
 import { midiToFrequency } from './fingering-data.js';
 
-// Audio context (created on first user interaction)
-let audioContext = null;
-let masterGain = null;
-let currentOscillator = null;
-let currentGain = null;
+// Tone.js synth and volume control
+let synth = null;
+let volume = null;
+let isInitialized = false;
+
+// Current note tracking
+let currentNote = null;
 
 // Default settings
 const DEFAULT_SETTINGS = {
-  volume: 0.5,
+  volumeLevel: 0.5,  // 0.0 to 1.0
   waveform: 'triangle',  // 'sine', 'triangle', 'sawtooth', 'square'
-  attackTime: 0.05,      // seconds
-  releaseTime: 0.3,      // seconds
-  sustainLevel: 0.7
 };
 
 let settings = { ...DEFAULT_SETTINGS };
 
+// Flute-like envelope settings
+// These create a smooth, airy sound similar to a bansuri
+const FLUTE_ENVELOPE = {
+  attack: 0.05,      // Quick but not instant attack
+  decay: 0.1,        // Short decay
+  sustain: 0.7,      // Moderate sustain level
+  release: 0.3       // Gentle release
+};
+
 /**
- * Initialize the audio context
+ * Initialize Tone.js audio system
  * Must be called from a user interaction (click, keypress, etc.)
  */
 function initAudio() {
-  if (audioContext) return true;
+  if (isInitialized) return true;
 
   try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // Create volume node (-20 to 0 dB range)
+    volume = new Tone.Volume(-10).toDestination();
 
-    // Create master gain node
-    masterGain = audioContext.createGain();
-    masterGain.gain.value = settings.volume;
-    masterGain.connect(audioContext.destination);
+    // Create synth with flute-like envelope
+    synth = new Tone.Synth({
+      oscillator: {
+        type: settings.waveform
+      },
+      envelope: FLUTE_ENVELOPE
+    }).connect(volume);
 
+    // Set initial volume
+    setVolume(settings.volumeLevel);
+
+    isInitialized = true;
     return true;
   } catch (e) {
-    console.error('Web Audio API not supported:', e);
+    console.error('Tone.js initialization failed:', e);
     return false;
   }
 }
 
 /**
- * Resume audio context if suspended (required by browsers)
+ * Ensure audio context is started (required by browsers)
  */
-async function resumeAudio() {
-  if (audioContext && audioContext.state === 'suspended') {
-    await audioContext.resume();
+async function ensureStarted() {
+  if (Tone.context.state !== 'running') {
+    await Tone.start();
   }
 }
 
@@ -59,55 +75,22 @@ async function resumeAudio() {
  * @param {number} duration - Duration in seconds (0 = sustained until stopNote)
  */
 function playFrequency(frequency, duration = 0) {
-  if (!audioContext) {
+  if (!isInitialized) {
     if (!initAudio()) return;
   }
 
-  resumeAudio();
+  ensureStarted();
 
   // Stop any currently playing note
   stopNote();
 
-  // Create oscillator
-  currentOscillator = audioContext.createOscillator();
-  currentOscillator.type = settings.waveform;
-  currentOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-  // Create gain node for envelope
-  currentGain = audioContext.createGain();
-  currentGain.gain.setValueAtTime(0, audioContext.currentTime);
-
-  // Connect: oscillator -> gain -> master -> destination
-  currentOscillator.connect(currentGain);
-  currentGain.connect(masterGain);
-
-  // Attack envelope
-  currentGain.gain.linearRampToValueAtTime(
-    settings.sustainLevel,
-    audioContext.currentTime + settings.attackTime
-  );
-
-  // Start oscillator
-  currentOscillator.start();
-
-  // If duration specified, schedule stop
   if (duration > 0) {
-    const stopTime = audioContext.currentTime + duration;
-
-    // Release envelope
-    currentGain.gain.setValueAtTime(settings.sustainLevel, stopTime - settings.releaseTime);
-    currentGain.gain.exponentialRampToValueAtTime(0.001, stopTime);
-
-    currentOscillator.stop(stopTime);
-
-    // Clean up reference after stop
-    const osc = currentOscillator;
-    osc.onended = () => {
-      if (currentOscillator === osc) {
-        currentOscillator = null;
-        currentGain = null;
-      }
-    };
+    // Play with specific duration
+    synth.triggerAttackRelease(frequency, duration);
+  } else {
+    // Sustained note (until stopNote is called)
+    synth.triggerAttack(frequency);
+    currentNote = frequency;
   }
 }
 
@@ -133,25 +116,13 @@ function playTap(midiNote) {
  * Stop the currently playing note with release envelope
  */
 function stopNote() {
-  if (currentOscillator && currentGain) {
+  if (currentNote !== null) {
     try {
-      const now = audioContext.currentTime;
-
-      // Cancel any scheduled changes
-      currentGain.gain.cancelScheduledValues(now);
-
-      // Quick release
-      currentGain.gain.setValueAtTime(currentGain.gain.value, now);
-      currentGain.gain.exponentialRampToValueAtTime(0.001, now + settings.releaseTime);
-
-      // Stop oscillator after release
-      currentOscillator.stop(now + settings.releaseTime + 0.01);
+      synth.triggerRelease();
+      currentNote = null;
     } catch (e) {
-      // Oscillator may already be stopped
+      // Note may already be released
     }
-
-    currentOscillator = null;
-    currentGain = null;
   }
 }
 
@@ -160,9 +131,15 @@ function stopNote() {
  * @param {number} level - Volume level 0.0 to 1.0
  */
 function setVolume(level) {
-  settings.volume = Math.max(0, Math.min(1, level));
-  if (masterGain) {
-    masterGain.gain.setValueAtTime(settings.volume, audioContext.currentTime);
+  settings.volumeLevel = Math.max(0, Math.min(1, level));
+
+  if (volume) {
+    // Convert 0-1 to decibels (-40 to 0 dB)
+    // Using a logarithmic scale for natural volume perception
+    const dbValue = settings.volumeLevel === 0
+      ? -Infinity
+      : -40 + (settings.volumeLevel * 40);
+    volume.volume.value = dbValue;
   }
 }
 
@@ -171,7 +148,7 @@ function setVolume(level) {
  * @returns {number} Current volume level
  */
 function getVolume() {
-  return settings.volume;
+  return settings.volumeLevel;
 }
 
 /**
@@ -182,6 +159,11 @@ function setWaveform(type) {
   const validTypes = ['sine', 'triangle', 'sawtooth', 'square'];
   if (validTypes.includes(type)) {
     settings.waveform = type;
+
+    // Update synth if already initialized
+    if (synth) {
+      synth.oscillator.type = type;
+    }
   }
 }
 
@@ -195,17 +177,22 @@ function getWaveform() {
 
 /**
  * Set envelope parameters
- * @param {object} params - { attackTime, releaseTime, sustainLevel }
+ * @param {object} params - { attack, decay, sustain, release }
  */
 function setEnvelope(params) {
-  if (params.attackTime !== undefined) {
-    settings.attackTime = Math.max(0.001, params.attackTime);
+  if (!synth) return;
+
+  if (params.attack !== undefined) {
+    synth.envelope.attack = Math.max(0.001, params.attack);
   }
-  if (params.releaseTime !== undefined) {
-    settings.releaseTime = Math.max(0.001, params.releaseTime);
+  if (params.decay !== undefined) {
+    synth.envelope.decay = Math.max(0.001, params.decay);
   }
-  if (params.sustainLevel !== undefined) {
-    settings.sustainLevel = Math.max(0, Math.min(1, params.sustainLevel));
+  if (params.sustain !== undefined) {
+    synth.envelope.sustain = Math.max(0, Math.min(1, params.sustain));
+  }
+  if (params.release !== undefined) {
+    synth.envelope.release = Math.max(0.001, params.release);
   }
 }
 
@@ -214,7 +201,14 @@ function setEnvelope(params) {
  * @returns {boolean}
  */
 function isAudioReady() {
-  return audioContext !== null && audioContext.state === 'running';
+  return isInitialized && Tone.context.state === 'running';
+}
+
+/**
+ * Resume audio context if suspended (required by browsers)
+ */
+async function resumeAudio() {
+  await ensureStarted();
 }
 
 /**
@@ -222,7 +216,7 @@ function isAudioReady() {
  * @returns {boolean}
  */
 function isPlaying() {
-  return currentOscillator !== null;
+  return currentNote !== null;
 }
 
 /**

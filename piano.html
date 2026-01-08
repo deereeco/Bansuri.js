@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bansuri.js - Piano Keyboard</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-container horizontal-layout">
     <header class="app-header">
       <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">
         <span class="hamburger-icon">☰</span>
@@ -27,23 +28,28 @@
           <span class="nav-icon">🎛️</span>
           <span class="nav-label">MIDI</span>
         </a>
-        <a href="musicxml.html" class="nav-link">
-          <span class="nav-icon">📄</span>
-          <span class="nav-label">MusicXML</span>
-        </a>
       </nav>
     </header>
 
     <main class="app-main">
-      <!-- Bansuri Display -->
-      <section class="bansuri-section">
-        <div id="bansuri-display" class="bansuri-display"></div>
+      <!-- Compact settings bar -->
+      <section class="settings-section">
+        <div id="settings-bar" class="settings-bar"></div>
       </section>
 
-      <!-- Controls with Note Info above -->
-      <section class="controls-section">
+      <!-- Note info display -->
+      <section class="note-info-section">
         <div id="note-info" class="note-info"></div>
+      </section>
+
+      <!-- Piano keyboard and controls -->
+      <section class="controls-section">
         <div id="controls" class="controls"></div>
+      </section>
+
+      <!-- Horizontal bansuri at bottom -->
+      <section class="bansuri-section horizontal">
+        <div id="bansuri-display" class="bansuri-display"></div>
       </section>
     </main>
 

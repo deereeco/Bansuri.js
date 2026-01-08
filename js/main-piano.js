@@ -4,7 +4,7 @@
  */
 
 import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
-import { createBansuri } from './bansuri-svg.js';
+import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playTap, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
 import { createKeySelector, createPianoKeyboard } from './input-handlers.js';
 
@@ -25,6 +25,7 @@ let keySelector = null;
  */
 function init() {
   const bansuriContainer = document.getElementById('bansuri-display');
+  const settingsContainer = document.getElementById('settings-bar');
   const controlsContainer = document.getElementById('controls');
   const noteInfoContainer = document.getElementById('note-info');
 
@@ -33,12 +34,25 @@ function init() {
     return;
   }
 
-  // Create bansuri SVG
-  bansuri = createBansuri(bansuriContainer);
+  // Create horizontal bansuri SVG
+  bansuri = createHorizontalBansuri(bansuriContainer);
 
-  // Create controls
+  // Create settings bar
+  if (settingsContainer) {
+    createSettingsBar(settingsContainer);
+  }
+
+  // Create piano keyboard
   if (controlsContainer) {
-    createControls(controlsContainer);
+    const pianoWrapper = document.createElement('div');
+    pianoWrapper.className = 'piano-wrapper';
+    controlsContainer.appendChild(pianoWrapper);
+
+    piano = createPianoKeyboard(pianoWrapper, handleNoteSelect, {
+      bansuriKey: state.bansuriKey,
+      startOctave: 3,
+      numOctaves: 3
+    });
   }
 
   // Create note info display
@@ -53,7 +67,7 @@ function init() {
   // Load saved preferences
   loadPreferences();
 
-  console.log('Bansuri.js Piano page initialized');
+  console.log('Bansuri.js Piano page initialized (horizontal layout)');
 }
 
 function initAudioOnce() {
@@ -61,40 +75,17 @@ function initAudioOnce() {
 }
 
 /**
- * Create control panel
+ * Create settings bar (key selector, volume, waveform)
  */
-function createControls(container) {
-  // Settings section
-  const settingsSection = createSection(container, 'Settings');
-  keySelector = createKeySelector(settingsSection, handleKeyChange, state.bansuriKey);
-  createVolumeControl(settingsSection);
-  createWaveformControl(settingsSection);
+function createSettingsBar(container) {
+  // Key selector
+  keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
 
-  // Piano keyboard section
-  const pianoSection = createSection(container, 'Piano Keyboard');
-  const pianoWrapper = document.createElement('div');
-  pianoWrapper.className = 'piano-wrapper';
-  pianoSection.appendChild(pianoWrapper);
+  // Volume control
+  createVolumeControl(container);
 
-  piano = createPianoKeyboard(pianoWrapper, handleNoteSelect, {
-    bansuriKey: state.bansuriKey,
-    startOctave: 3,
-    numOctaves: 3
-  });
-}
-
-function createSection(container, title) {
-  const section = document.createElement('div');
-  section.className = 'control-section';
-
-  const header = document.createElement('h3');
-  header.className = 'section-header';
-  header.textContent = title;
-
-  section.appendChild(header);
-  container.appendChild(section);
-
-  return section;
+  // Waveform control
+  createWaveformControl(container);
 }
 
 function createVolumeControl(container) {
@@ -140,10 +131,10 @@ function createWaveformControl(container) {
 
   const waveforms = getWaveformTypes();
   const labels = {
-    'sine': 'Sine (Pure)',
-    'triangle': 'Triangle (Flute-like)',
-    'sawtooth': 'Sawtooth (Bright)',
-    'square': 'Square (Hollow)'
+    'sine': 'Sine',
+    'triangle': 'Flute',
+    'sawtooth': 'Bright',
+    'square': 'Hollow'
   };
 
   waveforms.forEach(wf => {
