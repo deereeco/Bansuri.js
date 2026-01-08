@@ -89,8 +89,9 @@ function getFingeringForMidi(midiNote, bansuriKey = 'G') {
   let octave;
   let normalizedSemitones = semitonesFromSa;
 
-  if (semitonesFromSa < 0) {
-    // Below lowest Sa - not playable
+  // Bansuri playable range: Mandra Pa (semitone 7) to Taar Pa (semitone 31)
+  if (semitonesFromSa < 7) {
+    // Below Mandra Pa - not playable on bansuri
     return null;
   } else if (semitonesFromSa < 12) {
     octave = OCTAVES.LOW;

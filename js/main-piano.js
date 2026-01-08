@@ -50,8 +50,8 @@ function init() {
 
     piano = createPianoKeyboard(pianoWrapper, handleNoteSelect, {
       bansuriKey: state.bansuriKey,
-      startOctave: 3,
-      numOctaves: 3
+      startOctave: 4,
+      numOctaves: 4  // Show 4 octaves (C4-B7) - covers full bansuri range for all keys with fewer grey keys
     });
   }
 

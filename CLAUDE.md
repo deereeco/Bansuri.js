@@ -20,10 +20,9 @@ npx serve
 
 **Testing:**
 Open in browser at `http://localhost:8000` and navigate between:
-- `index.html` - Home page with note buttons and sargam input
+- `index.html` - Home page with combined Sargam/Western note grid
 - `piano.html` - Interactive piano keyboard interface
-- `midi.html` - MIDI device input interface
-- `musicxml.html` - MusicXML file import and note sequencing
+- `midi.html` - MIDI device input and MIDI file import
 
 ## Architecture
 
@@ -45,17 +44,17 @@ Returns fingering objects with: `{ midiNote, westernNote, indianNote, octave, ho
 
 ### Visual Rendering (js/bansuri-svg.js)
 
-Creates SVG visualization of the bansuri in two orientations:
+Creates SVG visualization of the bansuri. All pages now use the horizontal layout:
 
-**Vertical (default for piano/midi/musicxml pages):**
-- `createBansuri()` - 6 holes arranged vertically, blowhole at top
-- Octave indicator at bottom
-
-**Horizontal (used on index.html home page):**
+**Horizontal bansuri (used on all pages):**
 - `createHorizontalBansuri()` - 6 holes arranged left-to-right, blowhole on left
-- Larger display, positioned at bottom of page, scales to fill container width
+- Large display, positioned at bottom of page, scales to fill container width
 - Holes positioned toward right side with 1.5x spacing between R2-R3 (anatomically natural)
-- No octave indicator (removed for cleaner display)
+- No octave indicator (cleaner display - octave shown in note info instead)
+
+**Legacy vertical orientation (not currently used):**
+- `createBansuri()` - 6 holes arranged vertically, blowhole at top
+- Includes octave indicator at bottom
 
 Common features:
 - 6 finger holes (labeled L1-L3 for left hand, R1-R3 for right hand)
@@ -68,41 +67,60 @@ Controller API:
 
 ### Audio Engine (js/audio-engine.js)
 
-Web Audio API synthesis:
-- Generates reference tones using oscillators (not sampled audio)
-- Default waveform: `triangle` (flute-like sound)
-- ADSR envelope with attack/release for natural sound
-- `playMidi(midiNote, duration)` - Sustained playback
+Tone.js synthesis with flute-like envelope:
+- Uses Tone.js library (loaded via CDN in all HTML pages)
+- Generates reference tones using synth with envelope (not sampled audio)
+- Default waveform: `triangle` (labeled "Flute")
+- **Flute-optimized ADSR envelope**: attack 0.05s, decay 0.1s, sustain 0.7, release 0.3s
+- Four waveform options: Sine (pure), Flute (triangle), Bright (sawtooth), Hollow (square)
+- `playMidi(midiNote, duration)` - Sustained playback (duration=0) or timed playback
 - `playTap(midiNote)` - Short 0.3s note for UI feedback
 - Audio context initialized on first user interaction (browser requirement)
 
 ### Input Modes
 
-Four specialized main modules initialize different input interfaces:
+Three specialized main modules initialize different input interfaces:
 
-1. **main.js** (Home) - Horizontal layout with combined Sargam/Western note grid spanning Mandra Pa to Taar Pa (25 chromatic notes = 2 octaves)
-2. **main-piano.js** - Adds interactive piano keyboard visualization
-3. **main-midi.js** - Integrates `midi-handler.js` for Web MIDI API device input
-4. **main-musicxml.js** - Uses `musicxml-parser.js` to load and sequence notes from MusicXML files
+1. **main.js** (Home) - Horizontal layout with combined Sargam/Western note grid spanning Mandra Pa to Taar Pa (25 chromatic notes)
+2. **main-piano.js** - Interactive piano keyboard (4 octaves: C4-B7) with horizontal bansuri display
+3. **main-midi.js** - Web MIDI API device input + MIDI file import/playback, with horizontal bansuri display
+   - Integrates `midi-handler.js` for live MIDI device input
+   - Integrates `midi-file-parser.js` for Standard MIDI File (.mid) parsing and timed playback
 
-All modes share the fingering-data core.
+All pages share the same horizontal layout with compact settings bar at top and large horizontal bansuri at bottom. All modes share the fingering-data core.
 
 ### Input Handlers (js/input-handlers.js)
 
 Reusable UI component factory functions:
-- `createCombinedNoteGrid()` - Two-row grid with saptak (octave) groupings:
+- `createCombinedNoteGrid()` - Two-row grid with saptak (octave) groupings (used on home page):
   - Three labeled groups: Mandra (Pa–Ni), Madhya (Sa–Ni), Taar (Sa–Pa)
   - Fixed Sargam notes on top row, dynamic Western notes below (updates when key changes)
   - Range: Mandra Pa to Taar Pa (semitones 7-31, 25 chromatic notes)
   - `setHalfNotesVisible(boolean)` - Toggle visibility of komal/tivra notes (uses CSS visibility to maintain layout)
-- `createNoteButtons()` - Western note grid (C3-B5 range) - used by piano/midi/musicxml pages
-- `createSargamButtons()` - Indian note buttons (Sa, Re, Ga, etc.)
-- `createOctaveSelector()` - Mandra/Madhya/Taar selector for Sargam input
-- `createKeySelector()` - Bansuri key picker (C-B)
-- `createPianoKeyboard()` - SVG piano keyboard
-- `createTextInput()` - Free-form note name input parser
+- `createKeySelector()` - Bansuri key picker (C-B) - used in settings bar on all pages
+- `createPianoKeyboard()` - SVG piano keyboard (configurable octave range, default 4 octaves C4-B7)
+- `createNoteButtons()` - Western note grid (legacy, not currently used)
+- `createSargamButtons()` - Indian note buttons (legacy, not currently used)
+- `createOctaveSelector()` - Mandra/Madhya/Taar selector for Sargam input (legacy, not currently used)
+- `createTextInput()` - Free-form note name input parser (legacy, not currently used)
 
-Components maintain playability state - notes outside the bansuri's range are disabled.
+Components maintain playability state - notes outside the bansuri's range (Mandra Pa to Taar Pa) are disabled.
+
+### MIDI File Import (js/midi-file-parser.js)
+
+Standard MIDI File (SMF) parser and timed sequencer:
+- `parseMIDI(arrayBuffer)` - Parses binary MIDI file data into note events with timing
+- Supports tempo map extraction and timing calculations
+- `createMIDIFileInput(container, onParsed)` - File picker UI component
+- `createTempoControl(container, onTempoChange)` - Playback speed slider (0.25x to 2.0x)
+- `createTimedNoteSequencer(container, onNoteChange, audioEngine)` - Playback controls (Play, Pause, Stop, Prev, Next)
+  - Schedules note playback with accurate timing using `setTimeout`
+  - Calls `audioEngine.playMidi(note, duration)` for each note
+  - Displays current position (e.g., "Note 5 / 120")
+
+**MIDI page tabs:**
+- **Device Input**: Live MIDI keyboard/controller input via Web MIDI API
+- **File Import**: Load and play Standard MIDI Files with tempo control
 
 ### Shared Utilities
 
@@ -111,12 +129,17 @@ Components maintain playability state - notes outside the bansuri's range are di
 
 ## Key Concepts
 
-**Bansuri Playability**: A bansuri can play ~2.5 octaves (31 semitones) from Sa to high Pa. Range check is critical - use `isPlayable(midiNote, bansuriKey)` before showing notes as available.
+**Bansuri Playability**: A 6-hole bansuri can play 25 semitones (2+ octaves) from **Mandra Pa (semitone 7) to Taar Pa (semitone 31)**. The lowest playable note is Pa in the mandra octave, NOT Sa. Notes below semitone 7 return `null` from `getFingeringForMidi()`. Range check is critical - use `isPlayable(midiNote, bansuriKey)` before showing notes as available.
+
+**Playable range by flute key:**
+- C flute: G4 (Mandra Pa) to G6 (Taar Pa)
+- G flute: D5 (Mandra Pa) to D7 (Taar Pa)
+- B flute: F#5 (Mandra Pa) to F#7 (Taar Pa)
 
 **Octave Calculation**: The same fingering pattern produces three registers based on breath pressure:
-- 0-11 semitones from Sa = mandra (low octave)
-- 12-23 semitones = madhya (middle octave)
-- 24-30 semitones = taar (high octave, up to Pa)
+- 7-11 semitones from Sa = mandra (low octave, only Pa through Ni are playable)
+- 12-23 semitones = madhya (middle octave, full chromatic scale)
+- 24-31 semitones = taar (high octave, Sa through Pa are playable)
 
 **Half-holes**: Chromatic notes (sharps/flats not in the natural Lydian scale) require half-covering finger holes. The fingering-data module encodes these as `HALF` (0.5) values.
 
@@ -134,24 +157,25 @@ const state = {
 };
 ```
 
-The home page (main.js) uses a fixed range (Mandra Pa to Taar Pa) so no octave selector is needed. Other pages may include `currentOctaveOffset` for Sargam input.
+The home page (main.js) uses a fixed range (Mandra Pa to Taar Pa) so no octave selector is needed.
 
 Preferences (key, volume, waveform, showHalfNotes) are persisted to localStorage on change.
 
-### Settings Bar (Home Page)
+### Settings Bar (All Pages)
 
-The settings bar includes:
-- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels)
-- **Scale toggle** - "All Notes" shows all 12 chromatic notes, "Major Only" hides komal/tivra notes while maintaining layout
-- **Volume slider** - Audio playback volume
-- **Sound selector** - Waveform type (Sine, Flute/Triangle, Bright/Sawtooth, Hollow/Square)
+All pages now feature a compact horizontal settings bar at the top with:
+- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels, piano key states)
+- **Volume slider** - Audio playback volume (0-100%)
+- **Sound selector** - Waveform type (Sine, Flute, Bright, Hollow)
 
-## Web APIs Used
+**Home page only:**
+- **Scale toggle** - "Major Only" hides komal/tivra notes, "All Notes" shows all 12 chromatic notes (uses CSS visibility to maintain layout)
 
-- **Web Audio API**: Audio synthesis (js/audio-engine.js)
+## Web APIs and Libraries Used
+
+- **Tone.js** (v14.8.49 via CDN): Audio synthesis with envelope (js/audio-engine.js)
 - **Web MIDI API**: MIDI device input (js/midi-handler.js)
-- **DOMParser**: MusicXML parsing (js/musicxml-parser.js)
-- **localStorage**: User preferences persistence
+- **localStorage**: User preferences persistence (bansuri key, volume, waveform, scale toggle)
 
 ## Notes
 
@@ -159,3 +183,5 @@ The settings bar includes:
 - No transpilation or bundling - runs directly in modern browsers
 - SVG rendering uses namespace methods (`createElementNS`)
 - CSS custom properties enable theme switching without JavaScript color management
+- **Unified layout**: All pages use `.horizontal-layout` class with compact settings bar at top and large horizontal bansuri at bottom
+- Tone.js is loaded via CDN (`<script>` tag) in all HTML pages before the module scripts

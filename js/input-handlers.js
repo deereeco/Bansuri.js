@@ -246,7 +246,7 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('class', 'piano-keyboard');
   svg.style.width = '100%';
-  svg.style.maxWidth = `${width}px`;
+  svg.style.height = 'auto';
 
   const keys = [];
 

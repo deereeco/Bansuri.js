@@ -421,13 +421,21 @@ body {
 }
 
 /* ===== Piano Keyboard ===== */
+.piano-wrapper {
+  width: 100%;
+  overflow: visible;
+}
+
 .piano-keyboard-container {
   overflow-x: auto;
+  overflow-y: visible;
   padding: 5px 0;
+  width: 100%;
 }
 
 .piano-keyboard {
   display: block;
+  max-width: none;
 }
 
 .piano-key {
@@ -963,6 +971,11 @@ input:focus-visible {
   color: white;
 }
 
+
+/* Controls section in horizontal layout */
+.horizontal-layout .controls-section {
+  overflow: visible;
+}
 
 /* Horizontal bansuri section */
 .horizontal-layout .bansuri-section {
