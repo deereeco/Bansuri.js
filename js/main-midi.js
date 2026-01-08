@@ -8,7 +8,7 @@ import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
 import { createKeySelector } from './input-handlers.js';
 import { initMidi, onNoteOn, onNoteOff, createMidiStatusDisplay } from './midi-handler.js';
-import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer } from './midi-file-parser.js';
+import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer, createPianoRoll } from './midi-file-parser.js';
 
 // Application state
 const state = {
@@ -25,6 +25,7 @@ let bansuri = null;
 let keySelector = null;
 let midiStatus = null;
 let sequencer = null;
+let pianoRoll = null;
 
 // Audio engine reference that wraps audio functions
 // This object is created immediately so sequencer can use it,
@@ -162,6 +163,7 @@ function initDeviceTab() {
 function initFileTab() {
   const fileInputContainer = document.getElementById('file-input-container');
   const tempoControlContainer = document.getElementById('tempo-control-container');
+  const pianoRollContainer = document.getElementById('piano-roll-container');
   const sequencerContainer = document.getElementById('sequencer-container');
 
   // Create file input
@@ -174,12 +176,22 @@ function initFileTab() {
     createTempoControl(tempoControlContainer, handleTempoChange);
   }
 
+  // Create piano roll visualization
+  if (pianoRollContainer) {
+    pianoRoll = createPianoRoll(pianoRollContainer, {
+      width: 800,
+      height: 200,
+      bansuriKey: state.bansuriKey
+    });
+  }
+
   // Create sequencer
   if (sequencerContainer) {
     sequencer = createTimedNoteSequencer(
       sequencerContainer,
       handleSequencerNoteChange,
-      audioEngineRef
+      audioEngineRef,
+      handleTimeUpdate  // Pass time update callback for piano roll
     );
   }
 }
@@ -191,6 +203,18 @@ function handleMIDIFileParsed(midiData) {
   state.midiData = midiData;
   if (sequencer) {
     sequencer.setNotes(midiData.notes);
+  }
+  if (pianoRoll) {
+    pianoRoll.setNotes(midiData.notes, state.bansuriKey);
+  }
+}
+
+/**
+ * Handle time updates during playback (for piano roll playhead)
+ */
+function handleTimeUpdate(currentTime) {
+  if (pianoRoll) {
+    pianoRoll.setCurrentTime(currentTime);
   }
 }
 
@@ -363,6 +387,11 @@ function handleKeyChange(newKey) {
       bansuri.setFingering(newFingering);
       updateNoteInfo(newFingering);
     }
+  }
+
+  // Update piano roll to show new playable notes
+  if (pianoRoll) {
+    pianoRoll.updateBansuriKey(newKey);
   }
 
   savePreferences();

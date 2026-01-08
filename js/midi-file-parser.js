@@ -416,14 +416,203 @@ export function createTempoControl(container, onTempoChange) {
 }
 
 /**
+ * Create piano roll visualization for MIDI notes
+ */
+export function createPianoRoll(container, options = {}) {
+  const {
+    width = 800,
+    height = 300,
+    bansuriKey = 'G'
+  } = options;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'piano-roll-wrapper';
+  wrapper.style.width = '100%';
+  wrapper.style.height = `${height}px`;
+  wrapper.style.overflow = 'auto';
+  wrapper.style.position = 'relative';
+  wrapper.style.background = 'var(--bg-tertiary)';
+  wrapper.style.borderRadius = '6px';
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'piano-roll-canvas';
+  canvas.style.display = 'block';
+  canvas.style.imageRendering = 'crisp-edges';
+
+  wrapper.appendChild(canvas);
+  container.appendChild(wrapper);
+
+  let notes = [];
+  let currentTime = 0;
+  let maxTime = 0;
+  let minMidi = 60;
+  let maxMidi = 84;
+  let currentBansuriKey = bansuriKey;
+
+  const PIXELS_PER_SECOND = 100;
+  const MIDI_HEIGHT = 8; // pixels per MIDI note
+  const LEFT_MARGIN = 40; // space for note labels
+
+  function isPlayable(midiNote) {
+    // Import isPlayable logic - bansuri plays from semitone 7 to 31
+    const BANSURI_KEYS = {
+      'C': 60, 'C#': 61, 'D': 62, 'D#': 63, 'E': 64, 'F': 65,
+      'F#': 66, 'G': 67, 'G#': 68, 'A': 69, 'A#': 70, 'B': 71
+    };
+    const saNote = BANSURI_KEYS[currentBansuriKey];
+    const semitonesFromSa = midiNote - saNote;
+    return semitonesFromSa >= 7 && semitonesFromSa <= 31;
+  }
+
+  function midiToNoteName(midiNote) {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const octave = Math.floor(midiNote / 12) - 1;
+    const noteName = noteNames[midiNote % 12];
+    return `${noteName}${octave}`;
+  }
+
+  function draw() {
+    if (notes.length === 0) {
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      ctx.fillStyle = isDark ? '#aaa' : '#555';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No MIDI file loaded', width / 2, height / 2);
+      return;
+    }
+
+    const canvasWidth = LEFT_MARGIN + (maxTime / 1000) * PIXELS_PER_SECOND + 100;
+    const midiRange = maxMidi - minMidi + 1;
+    const canvasHeight = midiRange * MIDI_HEIGHT;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    const ctx = canvas.getContext('2d');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+    // Background
+    ctx.fillStyle = isDark ? '#1a1a2e' : '#f0f0f0';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw piano key background (alternating for white/black keys)
+    for (let midi = minMidi; midi <= maxMidi; midi++) {
+      const y = (maxMidi - midi) * MIDI_HEIGHT;
+      const noteNum = midi % 12;
+      const isBlackKey = [1, 3, 6, 8, 10].includes(noteNum);
+
+      ctx.fillStyle = isBlackKey
+        ? (isDark ? '#0f1419' : '#e8e8e8')
+        : (isDark ? '#16213e' : '#ffffff');
+      ctx.fillRect(0, y, canvasWidth, MIDI_HEIGHT);
+
+      // Draw horizontal grid line
+      ctx.strokeStyle = isDark ? '#0f3460' : '#d0d0d0';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvasWidth, y);
+      ctx.stroke();
+
+      // Draw note label on left
+      if (midi % 12 === 0 || noteNum === 0) {
+        ctx.fillStyle = isDark ? '#aaa' : '#555';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(midiToNoteName(midi), LEFT_MARGIN - 5, y + MIDI_HEIGHT / 2);
+      }
+    }
+
+    // Draw notes
+    notes.forEach(note => {
+      const x = LEFT_MARGIN + (note.startTime / 1000) * PIXELS_PER_SECOND;
+      const y = (maxMidi - note.midiNote) * MIDI_HEIGHT;
+      const w = Math.max(2, (note.duration / 1000) * PIXELS_PER_SECOND);
+      const h = MIDI_HEIGHT - 1;
+
+      const playable = isPlayable(note.midiNote);
+
+      // Note color
+      if (playable) {
+        ctx.fillStyle = isDark ? '#4a9eff' : '#2196f3'; // Blue for playable
+      } else {
+        ctx.fillStyle = isDark ? '#666' : '#999'; // Gray for non-playable
+      }
+
+      ctx.fillRect(x, y, w, h);
+
+      // Border
+      ctx.strokeStyle = isDark ? '#2a5a9f' : '#1565c0';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x, y, w, h);
+    });
+
+    // Draw playhead
+    const playheadX = LEFT_MARGIN + (currentTime / 1000) * PIXELS_PER_SECOND;
+    ctx.strokeStyle = '#e94560';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(playheadX, 0);
+    ctx.lineTo(playheadX, canvasHeight);
+    ctx.stroke();
+
+    // Auto-scroll to keep playhead in view
+    const scrollX = playheadX - wrapper.clientWidth / 2;
+    wrapper.scrollLeft = Math.max(0, scrollX);
+  }
+
+  return {
+    element: wrapper,
+    setNotes(newNotes, newBansuriKey) {
+      notes = newNotes;
+      if (newBansuriKey) {
+        currentBansuriKey = newBansuriKey;
+      }
+      currentTime = 0;
+
+      if (notes.length > 0) {
+        // Calculate range
+        minMidi = Math.min(...notes.map(n => n.midiNote));
+        maxMidi = Math.max(...notes.map(n => n.midiNote));
+        maxTime = Math.max(...notes.map(n => n.startTime + n.duration));
+
+        // Add padding
+        minMidi = Math.max(21, minMidi - 2);
+        maxMidi = Math.min(108, maxMidi + 2);
+      }
+
+      draw();
+    },
+    setCurrentTime(time) {
+      currentTime = time;
+      draw();
+    },
+    updateBansuriKey(newKey) {
+      currentBansuriKey = newKey;
+      draw();
+    },
+    redraw() {
+      draw();
+    }
+  };
+}
+
+/**
  * Create timed note sequencer component
  */
-export function createTimedNoteSequencer(container, onNoteChange, audioEngine) {
+export function createTimedNoteSequencer(container, onNoteChange, audioEngine, onTimeUpdate) {
   let notes = [];
   let currentIndex = 0;
   let isPlaying = false;
   let tempoMultiplier = 1.0;
   let scheduledTimeouts = [];
+  let playbackStartTime = 0;
+  let playbackStartOffset = 0;
+  let animationFrameId = null;
 
   const controls = document.createElement('div');
   controls.className = 'sequencer-controls';
@@ -463,12 +652,30 @@ export function createTimedNoteSequencer(container, onNoteChange, audioEngine) {
   function clearScheduledNotes() {
     scheduledTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
     scheduledTimeouts = [];
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
+  function updatePlaybackTime() {
+    if (!isPlaying) return;
+
+    const elapsed = (Date.now() - playbackStartTime) / tempoMultiplier;
+    const currentTime = playbackStartOffset + elapsed;
+
+    if (onTimeUpdate) {
+      onTimeUpdate(currentTime);
+    }
+
+    animationFrameId = requestAnimationFrame(updatePlaybackTime);
   }
 
   function stop() {
     isPlaying = false;
     clearScheduledNotes();
     currentIndex = 0;
+    playbackStartOffset = 0;
     updatePosition();
     playBtn.disabled = notes.length === 0;
     pauseBtn.disabled = true;
@@ -476,6 +683,10 @@ export function createTimedNoteSequencer(container, onNoteChange, audioEngine) {
     prevBtn.disabled = true;
     nextBtn.disabled = notes.length === 0;
     playBtn.textContent = '▶ Play';
+
+    if (onTimeUpdate) {
+      onTimeUpdate(0);
+    }
   }
 
   function pause() {
@@ -484,6 +695,12 @@ export function createTimedNoteSequencer(container, onNoteChange, audioEngine) {
     playBtn.disabled = false;
     pauseBtn.disabled = true;
     playBtn.textContent = '▶ Resume';
+
+    // Save current playback position
+    if (notes.length > 0 && currentIndex < notes.length) {
+      const elapsed = (Date.now() - playbackStartTime) / tempoMultiplier;
+      playbackStartOffset = playbackStartOffset + elapsed;
+    }
   }
 
   function play() {
@@ -496,8 +713,17 @@ export function createTimedNoteSequencer(container, onNoteChange, audioEngine) {
     prevBtn.disabled = true;
     nextBtn.disabled = true;
 
-    const startOffset = notes[currentIndex].startTime;
+    // If resuming, use the saved offset; otherwise start from current note
+    if (playbackStartOffset === 0 && currentIndex < notes.length) {
+      playbackStartOffset = notes[currentIndex].startTime;
+    }
+    playbackStartTime = Date.now();
+
+    const startOffset = playbackStartOffset;
     const tempoScale = 1 / tempoMultiplier;
+
+    // Start animation loop for piano roll
+    updatePlaybackTime();
 
     for (let i = currentIndex; i < notes.length; i++) {
       const note = notes[i];

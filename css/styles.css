@@ -438,6 +438,24 @@ body {
   max-width: none;
 }
 
+/* ===== Piano Roll Visualization ===== */
+.piano-roll-container {
+  margin: 15px 0;
+}
+
+.piano-roll-wrapper {
+  border: 1px solid var(--bg-tertiary);
+  cursor: grab;
+}
+
+.piano-roll-wrapper:active {
+  cursor: grabbing;
+}
+
+.piano-roll-canvas {
+  cursor: crosshair;
+}
+
 .piano-key {
   cursor: pointer;
   transition: fill var(--transition-speed);
