@@ -5,7 +5,7 @@
 
 import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
-import { initAudio, playTap, setVolume, getVolume, setWaveform, getWaveformTypes } from './audio-engine.js';
+import { initAudio, playTap } from './audio-engine.js';
 import { createKeySelector, createPianoKeyboard } from './input-handlers.js';
 
 // Application state
@@ -75,84 +75,11 @@ function initAudioOnce() {
 }
 
 /**
- * Create settings bar (key selector, volume, waveform)
+ * Create settings bar (key selector only)
  */
 function createSettingsBar(container) {
   // Key selector
   keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
-
-  // Volume control
-  createVolumeControl(container);
-
-  // Waveform control
-  createWaveformControl(container);
-}
-
-function createVolumeControl(container) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'volume-control';
-
-  const label = document.createElement('label');
-  label.textContent = 'Volume: ';
-
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.min = '0';
-  slider.max = '100';
-  slider.value = getVolume() * 100;
-  slider.className = 'volume-slider';
-
-  const value = document.createElement('span');
-  value.className = 'volume-value';
-  value.textContent = `${Math.round(getVolume() * 100)}%`;
-
-  slider.addEventListener('input', () => {
-    const vol = slider.value / 100;
-    setVolume(vol);
-    value.textContent = `${slider.value}%`;
-    savePreferences();
-  });
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(slider);
-  wrapper.appendChild(value);
-  container.appendChild(wrapper);
-}
-
-function createWaveformControl(container) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'waveform-control';
-
-  const label = document.createElement('label');
-  label.textContent = 'Sound: ';
-
-  const select = document.createElement('select');
-  select.className = 'waveform-select';
-
-  const waveforms = getWaveformTypes();
-  const labels = {
-    'sine': 'Sine',
-    'triangle': 'Flute',
-    'sawtooth': 'Bright',
-    'square': 'Hollow'
-  };
-
-  waveforms.forEach(wf => {
-    const option = document.createElement('option');
-    option.value = wf;
-    option.textContent = labels[wf] || wf;
-    if (wf === 'triangle') option.selected = true;
-    select.appendChild(option);
-  });
-
-  select.addEventListener('change', () => {
-    setWaveform(select.value);
-    savePreferences();
-  });
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(select);
-  container.appendChild(wrapper);
 }
 
 function createNoteInfo(container) {
@@ -232,8 +159,7 @@ function handleKeyChange(newKey) {
 
 function savePreferences() {
   const prefs = {
-    bansuriKey: state.bansuriKey,
-    volume: getVolume()
+    bansuriKey: state.bansuriKey
   };
 
   try {
@@ -247,9 +173,6 @@ function loadPreferences() {
     if (prefs) {
       if (prefs.bansuriKey && BANSURI_KEYS[prefs.bansuriKey]) {
         state.bansuriKey = prefs.bansuriKey;
-      }
-      if (typeof prefs.volume === 'number') {
-        setVolume(prefs.volume);
       }
     }
   } catch (e) {}

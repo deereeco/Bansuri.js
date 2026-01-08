@@ -15,8 +15,8 @@ let currentNote = null;
 
 // Default settings
 const DEFAULT_SETTINGS = {
-  volumeLevel: 0.5,  // 0.0 to 1.0
-  waveform: 'triangle',  // 'sine', 'triangle', 'sawtooth', 'square'
+  volumeLevel: 0.7,  // 0.0 to 1.0
+  waveform: 'sine',  // Using sine for pure, flute-like tone
 };
 
 let settings = { ...DEFAULT_SETTINGS };

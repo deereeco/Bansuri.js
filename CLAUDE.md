@@ -70,9 +70,10 @@ Controller API:
 Tone.js synthesis with flute-like envelope:
 - Uses Tone.js library (loaded via CDN in all HTML pages)
 - Generates reference tones using synth with envelope (not sampled audio)
-- Default waveform: `triangle` (labeled "Flute")
-- **Flute-optimized ADSR envelope**: attack 0.05s, decay 0.1s, sustain 0.7, release 0.3s
-- Four waveform options: Sine (pure), Flute (triangle), Bright (sawtooth), Hollow (square)
+- **Fixed configuration**: Sine wave with flute-optimized ADSR envelope
+- **ADSR envelope**: attack 0.05s, decay 0.1s, sustain 0.7, release 0.3s
+- **Fixed volume**: 70% (0.7) - users adjust system volume as needed
+- No user-facing volume or waveform controls (simplified UI)
 - `playMidi(midiNote, duration)` - Sustained playback (duration=0) or timed playback
 - `playTap(midiNote)` - Short 0.3s note for UI feedback
 - Audio context initialized on first user interaction (browser requirement)
@@ -159,23 +160,27 @@ const state = {
 
 The home page (main.js) uses a fixed range (Mandra Pa to Taar Pa) so no octave selector is needed.
 
-Preferences (key, volume, waveform, showHalfNotes) are persisted to localStorage on change.
+Preferences (key, showHalfNotes) are persisted to localStorage on change.
 
 ### Settings Bar (All Pages)
 
-All pages now feature a compact horizontal settings bar at the top with:
+All pages feature a simplified horizontal settings bar at the top:
+
+**All pages:**
 - **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels, piano key states)
-- **Volume slider** - Audio playback volume (0-100%)
-- **Sound selector** - Waveform type (Sine, Flute, Bright, Hollow)
 
 **Home page only:**
 - **Scale toggle** - "Major Only" hides komal/tivra notes, "All Notes" shows all 12 chromatic notes (uses CSS visibility to maintain layout)
+
+**Removed controls** (simplified UI):
+- Volume slider - Users adjust system volume instead
+- Sound selector - Fixed to sine wave with envelope
 
 ## Web APIs and Libraries Used
 
 - **Tone.js** (v14.8.49 via CDN): Audio synthesis with envelope (js/audio-engine.js)
 - **Web MIDI API**: MIDI device input (js/midi-handler.js)
-- **localStorage**: User preferences persistence (bansuri key, volume, waveform, scale toggle)
+- **localStorage**: User preferences persistence (bansuri key, scale toggle)
 
 ## Notes
 
