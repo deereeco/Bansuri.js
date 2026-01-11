@@ -21,7 +21,6 @@ npx serve
 **Testing:**
 Open in browser at `http://localhost:8000` and navigate between:
 - `index.html` - Home page with combined Sargam/Western note grid
-- `piano.html` - Interactive piano keyboard interface
 - `midi.html` - MIDI device input and MIDI file import
 
 ## Architecture
@@ -80,15 +79,14 @@ Tone.js synthesis with flute-like envelope:
 
 ### Input Modes
 
-Three specialized main modules initialize different input interfaces:
+Two specialized main modules initialize different input interfaces:
 
 1. **main.js** (Home) - Horizontal layout with combined Sargam/Western note grid spanning Mandra Pa to Taar Pa (25 chromatic notes)
-2. **main-piano.js** - Interactive piano keyboard (4 octaves: C4-B7) with horizontal bansuri display
-3. **main-midi.js** - Web MIDI API device input + MIDI file import/playback, with horizontal bansuri display
+2. **main-midi.js** - Web MIDI API device input + MIDI file import/playback, with horizontal bansuri display
    - Integrates `midi-handler.js` for live MIDI device input
    - Integrates `midi-file-parser.js` for Standard MIDI File (.mid) parsing and timed playback
 
-All pages share the same horizontal layout with compact settings bar at top and large horizontal bansuri at bottom. All modes share the fingering-data core.
+Both pages share the same horizontal layout with compact settings bar at top and large horizontal bansuri at bottom. All modes share the fingering-data core.
 
 ### Input Handlers (js/input-handlers.js)
 
@@ -99,7 +97,7 @@ Reusable UI component factory functions:
   - Range: Mandra Pa to Taar Pa (semitones 7-31, 25 chromatic notes)
   - `setHalfNotesVisible(boolean)` - Toggle visibility of komal/tivra notes (uses CSS visibility to maintain layout)
 - `createKeySelector()` - Bansuri key picker (C-B) - used in settings bar on all pages
-- `createPianoKeyboard()` - SVG piano keyboard (configurable octave range, default 4 octaves C4-B7)
+- `createPianoKeyboard()` - SVG piano keyboard (configurable octave range, default 4 octaves C4-B7) - available but not currently used
 - `createNoteButtons()` - Western note grid (legacy, not currently used)
 - `createSargamButtons()` - Indian note buttons (legacy, not currently used)
 - `createOctaveSelector()` - Mandra/Madhya/Taar selector for Sargam input (legacy, not currently used)
@@ -167,7 +165,9 @@ Preferences (key, showHalfNotes) are persisted to localStorage on change.
 All pages feature a simplified horizontal settings bar at the top:
 
 **All pages:**
-- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels, piano key states)
+- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels)
+- **Octave Shift controls** - Transpose audio output up/down by ±2 octaves (±24 semitones)
+- **Range display** - Shows the current effective playable range based on key and octave shift
 
 **Home page only:**
 - **Scale toggle** - "Major Only" hides komal/tivra notes, "All Notes" shows all 12 chromatic notes (uses CSS visibility to maintain layout)

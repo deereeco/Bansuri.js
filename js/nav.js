@@ -5,9 +5,7 @@
 
 const PAGES = [
   { href: 'index.html', label: 'Home', icon: '🏠' },
-  { href: 'piano.html', label: 'Piano', icon: '🎹' },
-  { href: 'midi.html', label: 'MIDI', icon: '🎛️' },
-  { href: 'musicxml.html', label: 'MusicXML', icon: '📄' }
+  { href: 'midi.html', label: 'MIDI', icon: '🎛️' }
 ];
 
 /**
