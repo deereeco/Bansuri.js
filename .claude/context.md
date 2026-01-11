@@ -12,3 +12,13 @@ All bansuri flutes follow the same fingering pattern, regardless of key:
 | ● ● ● ● ○ ○ | Ni          | Major 7th        | +11               |
 
 **Key Insight**: This pattern creates a Lydian scale with all natural (non-half-hole) fingerings.
+
+Thus,
+The way the western notes line up on the bansuri is the following:
+This is an example of a C Flute.
+             
+              F          D#       C#                     A#        G#
+
+  [Blow]============[ ]======[ ]======[ ]===========[ ]======[ ]=========[ ]====
+ 
+    F#               E        D        C             B        A           G

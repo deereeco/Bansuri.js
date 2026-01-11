@@ -1365,3 +1365,104 @@ input:focus-visible {
     margin-top: 8px;
   }
 }
+
+/* ===== Finder Page Styles ===== */
+
+/* Info section */
+.finder-info-section {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.finder-instructions {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Input container */
+.finder-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finder-input-container label {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.note-text-input {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  min-width: 200px;
+  font-family: inherit;
+}
+
+.note-text-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.1);
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-left: 5px;
+}
+
+/* Note labels on SVG */
+.note-label {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  fill: var(--text-secondary);
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+}
+
+/* Chromatic notes (half-holes) - italic style */
+.note-label.chromatic {
+  font-style: italic;
+  fill: var(--text-tertiary);
+}
+
+/* Highlighted labels */
+.note-label.highlighted {
+  fill: var(--accent-primary);
+  font-size: 14px;
+  filter: drop-shadow(0 0 3px var(--accent-primary));
+}
+
+/* Responsive adjustments for finder page */
+@media (max-width: 600px) {
+  .note-label {
+    font-size: 10px;
+  }
+
+  .note-label.highlighted {
+    font-size: 12px;
+  }
+
+  .note-text-input {
+    min-width: 150px;
+    font-size: 0.85rem;
+  }
+
+  .finder-input-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

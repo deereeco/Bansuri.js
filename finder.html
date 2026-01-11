@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bansuri.js - Interactive 6-Hole Flute Fingering Chart</title>
+  <title>Flute Finder - Find Your Flute</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
   <div class="app-container horizontal-layout">
@@ -13,10 +12,10 @@
       <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">
         <span class="hamburger-icon">☰</span>
       </button>
-      <h1 class="app-title">Bansuri.js</h1>
+      <h1 class="app-title">Flute Finder</h1>
       <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
       <nav class="nav-dropdown" hidden>
-        <a href="index.html" class="nav-link active" aria-current="page">
+        <a href="index.html" class="nav-link">
           <span class="nav-icon">🏠</span>
           <span class="nav-label">Home</span>
         </a>
@@ -24,7 +23,7 @@
           <span class="nav-icon">🎛️</span>
           <span class="nav-label">MIDI</span>
         </a>
-        <a href="finder.html" class="nav-link">
+        <a href="finder.html" class="nav-link active" aria-current="page">
           <span class="nav-icon">🔍</span>
           <span class="nav-label">Finder</span>
         </a>
@@ -32,22 +31,19 @@
     </header>
 
     <main class="app-main">
-      <!-- Compact settings bar -->
+      <!-- Settings bar with key selector and text input -->
       <section class="settings-section">
         <div id="settings-bar" class="settings-bar"></div>
       </section>
 
-      <!-- Note info display -->
-      <section class="note-info-section">
-        <div id="note-info" class="note-info"></div>
+      <!-- Instructions -->
+      <section class="finder-info-section">
+        <p class="finder-instructions">
+          Enter notes (e.g., c,d,e,f,g,a) to see them on the bansuri. Natural notes appear below, chromatic notes (italic) appear above.
+        </p>
       </section>
 
-      <!-- Combined note grid -->
-      <section class="note-grid-section">
-        <div id="note-grid" class="note-grid"></div>
-      </section>
-
-      <!-- Horizontal bansuri at bottom -->
+      <!-- Horizontal bansuri display with note labels -->
       <section class="bansuri-section horizontal">
         <div id="bansuri-display" class="bansuri-display"></div>
       </section>
@@ -55,15 +51,13 @@
 
     <footer class="app-footer">
       <p class="legend">
-        <span class="legend-item"><span class="hole closed"></span> Closed</span>
-        <span class="legend-item"><span class="hole open"></span> Open</span>
-        <span class="legend-item"><span class="hole half"></span> Half</span>
+        <span>Natural fingerings below • Half-hole fingerings above (italic)</span>
       </p>
     </footer>
   </div>
 
   <script type="module" src="js/theme.js"></script>
   <script type="module" src="js/nav.js"></script>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main-finder.js"></script>
 </body>
 </html>
