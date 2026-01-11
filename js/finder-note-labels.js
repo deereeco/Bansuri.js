@@ -92,7 +92,11 @@ export function createNoteLabels(svg, holes, config, bansuriKey) {
         const baseMidi = BANSURI_KEYS[newBansuriKey];
         const midiNote = baseMidi + semitone;
         const westernNote = midiToNoteName(midiNote).replace(/\d/g, ''); // Remove octave number
-        labels[semitone].textContent = westernNote;
+        // Access the text element within the group
+        const textElement = labels[semitone].querySelector('text');
+        if (textElement) {
+          textElement.textContent = westernNote;
+        }
       }
     },
 
@@ -124,23 +128,36 @@ export function createNoteLabels(svg, holes, config, bansuriKey) {
 }
 
 /**
- * Create a note label text element
+ * Create a note label text element with background circle
  * @param {number} x - X position
  * @param {number} y - Y position
  * @param {string} westernNote - Western note name (e.g., "C", "C#")
  * @param {string} indianNote - Indian note name (for tooltip)
  * @param {number} semitone - Semitone value (0-11)
  * @param {boolean} isChromatic - Whether this is a chromatic note
- * @returns {SVGTextElement}
+ * @returns {SVGGElement} Group containing background circle and text
  */
 function createLabelText(x, y, westernNote, indianNote, semitone, isChromatic) {
+  // Create group to hold background and text
+  const group = document.createElementNS(SVG_NS, 'g');
+  group.setAttribute('class', 'note-label-group');
+  group.dataset.semitone = semitone;
+  group.dataset.indian = indianNote;
+
+  // Create background circle
+  const bgCircle = document.createElementNS(SVG_NS, 'circle');
+  bgCircle.setAttribute('cx', x);
+  bgCircle.setAttribute('cy', y - 5); // Offset to center on text
+  bgCircle.setAttribute('r', 14);
+  bgCircle.setAttribute('class', 'note-label-bg');
+  group.appendChild(bgCircle);
+
+  // Create text element
   const text = document.createElementNS(SVG_NS, 'text');
   text.setAttribute('x', x);
   text.setAttribute('y', y);
   text.setAttribute('text-anchor', 'middle');
   text.setAttribute('class', isChromatic ? 'note-label chromatic' : 'note-label');
-  text.dataset.semitone = semitone;
-  text.dataset.indian = indianNote;
   text.textContent = westernNote;
 
   // Add title for tooltip
@@ -148,7 +165,8 @@ function createLabelText(x, y, westernNote, indianNote, semitone, isChromatic) {
   title.textContent = indianNote;
   text.appendChild(title);
 
-  return text;
+  group.appendChild(text);
+  return group;
 }
 
 /**

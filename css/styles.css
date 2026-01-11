@@ -1439,11 +1439,24 @@ input:focus-visible {
   fill: var(--text-secondary);
 }
 
-/* Highlighted labels */
-.note-label.highlighted {
-  fill: var(--accent-primary);
+/* Background circle for note labels - hidden by default */
+.note-label-bg {
+  fill: transparent;
+  stroke: none;
+  transition: all 0.3s ease;
+}
+
+/* Highlighted labels - green background, black text */
+.note-label-group.highlighted .note-label-bg {
+  fill: #4ade80;
+  stroke: #22c55e;
+  stroke-width: 2;
+}
+
+.note-label-group.highlighted .note-label {
+  fill: #000000;
   font-size: 18px;
-  filter: drop-shadow(0 0 3px var(--accent-primary));
+  font-weight: bold;
 }
 
 /* Make the bansuri larger on finder page */
@@ -1459,7 +1472,7 @@ input:focus-visible {
     font-size: 14px;
   }
 
-  .note-label.highlighted {
+  .note-label-group.highlighted .note-label {
     font-size: 16px;
   }
 
