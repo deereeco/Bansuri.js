@@ -3,14 +3,15 @@
  * Piano keyboard input for bansuri fingering visualization
  */
 
-import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
+import { getFingeringForMidi, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playTap } from './audio-engine.js';
-import { createKeySelector, createPianoKeyboard } from './input-handlers.js';
+import { createKeySelector, createOctaveShift, createRangeDisplay, createPianoKeyboard } from './input-handlers.js';
 
 // Application state
 const state = {
   bansuriKey: 'G',
+  octaveShift: 0,
   currentFingering: null,
   audioEnabled: true
 };
@@ -19,6 +20,8 @@ const state = {
 let bansuri = null;
 let piano = null;
 let keySelector = null;
+let octaveShiftControl = null;
+let rangeDisplay = null;
 
 /**
  * Initialize the application
@@ -50,6 +53,7 @@ function init() {
 
     piano = createPianoKeyboard(pianoWrapper, handleNoteSelect, {
       bansuriKey: state.bansuriKey,
+      octaveShift: state.octaveShift,
       startOctave: 4,
       numOctaves: 4  // Show 4 octaves (C4-B7) - covers full bansuri range for all keys with fewer grey keys
     });
@@ -75,11 +79,17 @@ function initAudioOnce() {
 }
 
 /**
- * Create settings bar (key selector only)
+ * Create settings bar (key selector, octave shift, and range display)
  */
 function createSettingsBar(container) {
   // Key selector
   keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
+
+  // Octave shift controls
+  octaveShiftControl = createOctaveShift(container, handleOctaveShiftChange, state.octaveShift);
+
+  // Range display
+  rangeDisplay = createRangeDisplay(container, state.bansuriKey, state.octaveShift);
 }
 
 function createNoteInfo(container) {
@@ -122,28 +132,45 @@ function updateNoteInfo(fingering) {
 }
 
 function handleNoteSelect(noteName, midiNote) {
+  const shiftedMidiNote = midiNote + (state.octaveShift * 12);
+
+  // Get fingering for the BASE (unshifted) note to show the fingering pattern
   const fingering = getFingeringForMidi(midiNote, state.bansuriKey);
 
   if (fingering) {
     state.currentFingering = fingering;
     bansuri.setFingering(fingering);
-    updateNoteInfo(fingering);
 
-    if (state.audioEnabled) {
-      playTap(midiNote);
-    }
+    // Create a display fingering object with shifted note info for the display
+    const displayFingering = {
+      ...fingering,
+      midiNote: shiftedMidiNote,
+      westernNote: midiToNoteName(shiftedMidiNote)
+    };
+    updateNoteInfo(displayFingering);
+  }
 
-    if (piano) {
-      piano.highlightKey(midiNote);
-    }
+  // Always play audio at the shifted pitch, even if outside fingering range
+  if (state.audioEnabled) {
+    playTap(shiftedMidiNote);
+  }
+
+  if (piano) {
+    piano.highlightKey(midiNote);
   }
 }
 
 function handleKeyChange(newKey) {
   state.bansuriKey = newKey;
 
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(newKey, state.octaveShift);
+  }
+
+  // Update piano keyboard playability
   if (piano) {
-    piano.updatePlayableNotes(newKey);
+    piano.updatePlayableNotes(newKey, state.octaveShift);
   }
 
   if (state.currentFingering) {
@@ -157,9 +184,35 @@ function handleKeyChange(newKey) {
   savePreferences();
 }
 
+function handleOctaveShiftChange(newShift) {
+  state.octaveShift = newShift;
+
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(state.bansuriKey, state.octaveShift);
+  }
+
+  // Update piano keyboard playability
+  if (piano) {
+    piano.updatePlayableNotes(state.bansuriKey, state.octaveShift);
+  }
+
+  // Re-display current fingering if exists
+  if (state.currentFingering) {
+    const newFingering = getFingeringForMidi(state.currentFingering.midiNote, state.bansuriKey);
+    if (newFingering) {
+      bansuri.setFingering(newFingering);
+      updateNoteInfo(newFingering);
+    }
+  }
+
+  savePreferences();
+}
+
 function savePreferences() {
   const prefs = {
-    bansuriKey: state.bansuriKey
+    bansuriKey: state.bansuriKey,
+    octaveShift: state.octaveShift
   };
 
   try {
@@ -173,6 +226,25 @@ function loadPreferences() {
     if (prefs) {
       if (prefs.bansuriKey && BANSURI_KEYS[prefs.bansuriKey]) {
         state.bansuriKey = prefs.bansuriKey;
+        // Update key selector if it exists
+        if (keySelector) {
+          keySelector.setKey(prefs.bansuriKey);
+        }
+      }
+      if (typeof prefs.octaveShift === 'number' && prefs.octaveShift >= -2 && prefs.octaveShift <= 2) {
+        state.octaveShift = prefs.octaveShift;
+        // Update octave shift control if it exists
+        if (octaveShiftControl) {
+          octaveShiftControl.setShift(prefs.octaveShift);
+        }
+        // Update range display if it exists
+        if (rangeDisplay) {
+          rangeDisplay.update(state.bansuriKey, prefs.octaveShift);
+        }
+        // Update piano keyboard playability
+        if (piano) {
+          piano.updatePlayableNotes(state.bansuriKey, prefs.octaveShift);
+        }
       }
     }
   } catch (e) {}

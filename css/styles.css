@@ -334,6 +334,56 @@ body {
   font-size: 0.8rem;
 }
 
+/* ===== Octave Shift Controls ===== */
+.octave-shift-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.octave-shift-button {
+  padding: 6px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.octave-shift-button:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--text-secondary);
+}
+
+.octave-shift-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.octave-shift-display {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+/* ===== Range Display ===== */
+.range-display-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.range-display-range {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
 /* ===== Volume & Waveform Controls ===== */
 .volume-control,
 .waveform-control {
@@ -480,6 +530,7 @@ body {
 .piano-key.not-playable {
   cursor: not-allowed;
   opacity: 0.5;
+  pointer-events: none;
 }
 
 /* ===== Sargam Buttons (Compact) ===== */

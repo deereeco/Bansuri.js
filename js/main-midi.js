@@ -3,16 +3,17 @@
  * MIDI device input for bansuri fingering visualization
  */
 
-import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
+import { getFingeringForMidi, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote } from './audio-engine.js';
-import { createKeySelector } from './input-handlers.js';
+import { createKeySelector, createOctaveShift, createRangeDisplay } from './input-handlers.js';
 import { initMidi, onNoteOn, onNoteOff, createMidiStatusDisplay } from './midi-handler.js';
 import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer, createPianoRoll } from './midi-file-parser.js';
 
 // Application state
 const state = {
   bansuriKey: 'G',
+  octaveShift: 0,
   currentFingering: null,
   audioEnabled: true,
   activeTab: 'device',
@@ -23,6 +24,8 @@ const state = {
 // UI Components
 let bansuri = null;
 let keySelector = null;
+let octaveShiftControl = null;
+let rangeDisplay = null;
 let midiStatus = null;
 let sequencer = null;
 let pianoRoll = null;
@@ -31,7 +34,10 @@ let pianoRoll = null;
 // This object is created immediately so sequencer can use it,
 // but the functions it calls will initialize audio on first use
 const audioEngineRef = {
-  playMidi: (note, duration) => playMidi(note, duration),
+  playMidi: (note, duration) => {
+    const shiftedNote = note + (state.octaveShift * 12);
+    return playMidi(shiftedNote, duration);
+  },
   stopNote: () => stopNote()
 };
 
@@ -88,11 +94,17 @@ function init() {
 }
 
 /**
- * Create settings bar (key selector only)
+ * Create settings bar (key selector, octave shift, and range display)
  */
 function createSettingsBar(container) {
   // Key selector
   keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
+
+  // Octave shift controls
+  octaveShiftControl = createOctaveShift(container, handleOctaveShiftChange, state.octaveShift);
+
+  // Range display
+  rangeDisplay = createRangeDisplay(container, state.bansuriKey, state.octaveShift);
 }
 
 /**
@@ -225,12 +237,22 @@ function handleTempoChange(multiplier) {
  * Handle sequencer note change
  */
 function handleSequencerNoteChange(noteData) {
+  const shiftedNote = noteData.midiNote + (state.octaveShift * 12);
+
+  // Get fingering for the BASE (unshifted) note to show the fingering pattern
   const fingering = getFingeringForMidi(noteData.midiNote, state.bansuriKey);
 
   if (fingering) {
     state.currentFingering = fingering;
     bansuri.setFingering(fingering);
-    updateNoteInfo(fingering);
+
+    // Create a display fingering object with shifted note info for the display
+    const displayFingering = {
+      ...fingering,
+      midiNote: shiftedNote,
+      westernNote: midiToNoteName(shiftedNote)
+    };
+    updateNoteInfo(displayFingering);
   }
 
   // Update playback state
@@ -284,16 +306,27 @@ function setupMidiHandlers() {
     // Block device input during file playback
     if (state.isFilePlayback) return;
 
+    const shiftedNote = note + (state.octaveShift * 12);
+
+    // Get fingering for the BASE (unshifted) note to show the fingering pattern
     const fingering = getFingeringForMidi(note, state.bansuriKey);
 
     if (fingering) {
       state.currentFingering = fingering;
       bansuri.setFingering(fingering);
-      updateNoteInfo(fingering);
 
-      if (state.audioEnabled) {
-        playMidi(note, 0); // Sustained until note off
-      }
+      // Create a display fingering object with shifted note info for the display
+      const displayFingering = {
+        ...fingering,
+        midiNote: shiftedNote,
+        westernNote: midiToNoteName(shiftedNote)
+      };
+      updateNoteInfo(displayFingering);
+    }
+
+    // Always play audio at the shifted pitch, even if outside fingering range
+    if (state.audioEnabled) {
+      playMidi(shiftedNote, 0); // Sustained until note off
     }
   });
 
@@ -307,6 +340,11 @@ function setupMidiHandlers() {
 
 function handleKeyChange(newKey) {
   state.bansuriKey = newKey;
+
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(newKey, state.octaveShift);
+  }
 
   if (state.currentFingering) {
     const newFingering = getFingeringForMidi(state.currentFingering.midiNote, newKey);
@@ -324,9 +362,30 @@ function handleKeyChange(newKey) {
   savePreferences();
 }
 
+function handleOctaveShiftChange(newShift) {
+  state.octaveShift = newShift;
+
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(state.bansuriKey, state.octaveShift);
+  }
+
+  // Re-display current fingering if exists
+  if (state.currentFingering) {
+    const newFingering = getFingeringForMidi(state.currentFingering.midiNote, state.bansuriKey);
+    if (newFingering) {
+      bansuri.setFingering(newFingering);
+      updateNoteInfo(newFingering);
+    }
+  }
+
+  savePreferences();
+}
+
 function savePreferences() {
   const prefs = {
-    bansuriKey: state.bansuriKey
+    bansuriKey: state.bansuriKey,
+    octaveShift: state.octaveShift
   };
 
   try {
@@ -340,6 +399,21 @@ function loadPreferences() {
     if (prefs) {
       if (prefs.bansuriKey && BANSURI_KEYS[prefs.bansuriKey]) {
         state.bansuriKey = prefs.bansuriKey;
+        // Update key selector if it exists
+        if (keySelector) {
+          keySelector.setKey(prefs.bansuriKey);
+        }
+      }
+      if (typeof prefs.octaveShift === 'number' && prefs.octaveShift >= -2 && prefs.octaveShift <= 2) {
+        state.octaveShift = prefs.octaveShift;
+        // Update octave shift control if it exists
+        if (octaveShiftControl) {
+          octaveShiftControl.setShift(prefs.octaveShift);
+        }
+        // Update range display if it exists
+        if (rangeDisplay) {
+          rangeDisplay.update(state.bansuriKey, prefs.octaveShift);
+        }
       }
     }
   } catch (e) {}

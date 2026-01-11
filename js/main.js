@@ -3,14 +3,15 @@
  * New horizontal layout with combined Sargam/Western note grid
  */
 
-import { getFingeringForMidi, midiToFrequency, BANSURI_KEYS } from './fingering-data.js';
+import { getFingeringForMidi, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playTap } from './audio-engine.js';
-import { createKeySelector, createCombinedNoteGrid } from './input-handlers.js';
+import { createKeySelector, createOctaveShift, createRangeDisplay, createCombinedNoteGrid } from './input-handlers.js';
 
 // Application state
 const state = {
   bansuriKey: 'G',
+  octaveShift: 0,
   currentFingering: null,
   audioEnabled: true,
   showHalfNotes: false
@@ -20,6 +21,8 @@ const state = {
 let bansuri = null;
 let combinedNoteGrid = null;
 let keySelector = null;
+let octaveShiftControl = null;
+let rangeDisplay = null;
 
 /**
  * Initialize the application
@@ -74,11 +77,17 @@ function initAudioOnce() {
 }
 
 /**
- * Create settings bar (key selector and scale toggle)
+ * Create settings bar (key selector, octave shift, range display, and scale toggle)
  */
 function createSettingsBar(container) {
   // Key selector
   keySelector = createKeySelector(container, handleKeyChange, state.bansuriKey);
+
+  // Octave shift controls
+  octaveShiftControl = createOctaveShift(container, handleOctaveShiftChange, state.octaveShift);
+
+  // Range display
+  rangeDisplay = createRangeDisplay(container, state.bansuriKey, state.octaveShift);
 
   // Half notes toggle
   createHalfNotesToggle(container);
@@ -168,17 +177,30 @@ function updateNoteInfo(fingering) {
  * @param {number} semitone - Semitones from low Sa
  */
 function handleNoteSelect(sargamNote, midiNote, semitone) {
-  const fingering = getFingeringForMidi(midiNote, state.bansuriKey);
+  const baseMidi = BANSURI_KEYS[state.bansuriKey];
+  const shiftSemitones = state.octaveShift * 12;
+  const shiftedMidiNote = baseMidi + semitone + shiftSemitones;
+
+  // Get fingering for the BASE (unshifted) note to show the fingering pattern
+  const baseNote = baseMidi + semitone;
+  const fingering = getFingeringForMidi(baseNote, state.bansuriKey);
 
   if (fingering) {
     state.currentFingering = fingering;
     bansuri.setFingering(fingering);
-    updateNoteInfo(fingering);
 
-    // Play audio
-    if (state.audioEnabled) {
-      playTap(midiNote);
-    }
+    // Create a display fingering object with shifted note info for the display
+    const displayFingering = {
+      ...fingering,
+      midiNote: shiftedMidiNote,
+      westernNote: midiToNoteName(shiftedMidiNote)
+    };
+    updateNoteInfo(displayFingering);
+  }
+
+  // Always play audio at the shifted pitch, even if outside fingering range
+  if (state.audioEnabled) {
+    playTap(shiftedMidiNote);
   }
 }
 
@@ -187,6 +209,11 @@ function handleNoteSelect(sargamNote, midiNote, semitone) {
  */
 function handleKeyChange(newKey) {
   state.bansuriKey = newKey;
+
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(newKey, state.octaveShift);
+  }
 
   // Update Western notes in the combined grid
   if (combinedNoteGrid) {
@@ -216,11 +243,41 @@ function handleKeyChange(newKey) {
 }
 
 /**
+ * Handle octave shift change
+ */
+function handleOctaveShiftChange(newShift) {
+  state.octaveShift = newShift;
+
+  // Update range display
+  if (rangeDisplay) {
+    rangeDisplay.update(state.bansuriKey, state.octaveShift);
+  }
+
+  // Re-display current fingering if exists
+  if (state.currentFingering) {
+    const semitone = state.currentFingering.semitonesFromSa;
+    const baseMidi = BANSURI_KEYS[state.bansuriKey];
+    const octaveOffset = state.currentFingering.octave === 'madhya' ? 12 :
+                         state.currentFingering.octave === 'taar' ? 24 : 0;
+    const newMidiNote = baseMidi + semitone + octaveOffset;
+
+    const newFingering = getFingeringForMidi(newMidiNote, state.bansuriKey);
+    if (newFingering) {
+      bansuri.setFingering(newFingering);
+      updateNoteInfo(newFingering);
+    }
+  }
+
+  savePreferences();
+}
+
+/**
  * Save user preferences to localStorage
  */
 function savePreferences() {
   const prefs = {
     bansuriKey: state.bansuriKey,
+    octaveShift: state.octaveShift,
     showHalfNotes: state.showHalfNotes
   };
 
@@ -247,6 +304,17 @@ function loadPreferences() {
         // Update combined note grid
         if (combinedNoteGrid) {
           combinedNoteGrid.updateWesternNotes(prefs.bansuriKey);
+        }
+      }
+      if (typeof prefs.octaveShift === 'number' && prefs.octaveShift >= -2 && prefs.octaveShift <= 2) {
+        state.octaveShift = prefs.octaveShift;
+        // Update octave shift control if it exists
+        if (octaveShiftControl) {
+          octaveShiftControl.setShift(prefs.octaveShift);
+        }
+        // Update range display if it exists
+        if (rangeDisplay) {
+          rangeDisplay.update(state.bansuriKey, prefs.octaveShift);
         }
       }
       if (typeof prefs.showHalfNotes === 'boolean') {

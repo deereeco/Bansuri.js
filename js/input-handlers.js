@@ -3,7 +3,7 @@
  * Handles various input methods: buttons, text, dropdown, piano keyboard
  */
 
-import { NOTES, BANSURI_KEYS, getFingeringForNote, getFingeringForSargam, isPlayable, noteNameToMidi } from './fingering-data.js';
+import { NOTES, BANSURI_KEYS, getFingeringForNote, getFingeringForSargam, getFingeringForMidi, isPlayable, noteNameToMidi, midiToNoteName } from './fingering-data.js';
 
 // SVG namespace
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -219,6 +219,131 @@ function createKeySelector(container, onKeyChange, initialKey = 'G') {
 }
 
 /**
+ * Create octave shift controls
+ * @param {HTMLElement} container - Container element
+ * @param {Function} onShiftChange - Callback when shift changes
+ * @param {number} initialShift - Initial shift value (-2 to 2)
+ * @returns {object} Controller object
+ */
+function createOctaveShift(container, onShiftChange, initialShift = 0) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'octave-shift-container';
+
+  const label = document.createElement('label');
+  label.textContent = 'Octave Shift: ';
+
+  const downButton = document.createElement('button');
+  downButton.textContent = '↓';
+  downButton.className = 'octave-shift-button';
+  downButton.title = 'Shift down one octave';
+
+  const display = document.createElement('span');
+  display.className = 'octave-shift-display';
+  const updateDisplay = (shift) => {
+    if (shift === 0) display.textContent = '0';
+    else display.textContent = (shift > 0 ? '+' : '') + shift;
+  };
+  updateDisplay(initialShift);
+
+  const upButton = document.createElement('button');
+  upButton.textContent = '↑';
+  upButton.className = 'octave-shift-button';
+  upButton.title = 'Shift up one octave';
+
+  let currentShift = initialShift;
+
+  downButton.addEventListener('click', () => {
+    if (currentShift > -2) {
+      currentShift--;
+      updateDisplay(currentShift);
+      updateButtonStates();
+      onShiftChange(currentShift);
+    }
+  });
+
+  upButton.addEventListener('click', () => {
+    if (currentShift < 2) {
+      currentShift++;
+      updateDisplay(currentShift);
+      updateButtonStates();
+      onShiftChange(currentShift);
+    }
+  });
+
+  const updateButtonStates = () => {
+    downButton.disabled = currentShift <= -2;
+    upButton.disabled = currentShift >= 2;
+  };
+  updateButtonStates();
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(downButton);
+  wrapper.appendChild(display);
+  wrapper.appendChild(upButton);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    getShift() {
+      return currentShift;
+    },
+    setShift(shift) {
+      if (shift >= -2 && shift <= 2) {
+        currentShift = shift;
+        updateDisplay(currentShift);
+        updateButtonStates();
+      }
+    }
+  };
+}
+
+/**
+ * Create range display
+ * @param {HTMLElement} container - Container element
+ * @param {string} bansuriKey - Initial bansuri key
+ * @param {number} octaveShift - Initial octave shift
+ * @returns {object} Controller object
+ */
+function createRangeDisplay(container, bansuriKey = 'G', octaveShift = 0) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'range-display-container';
+
+  const label = document.createElement('span');
+  label.textContent = 'Range: ';
+  label.className = 'range-display-label';
+
+  const range = document.createElement('span');
+  range.className = 'range-display-range';
+
+  const updateRange = (key, shift) => {
+    const saNote = BANSURI_KEYS[key];
+    const shiftSemitones = shift * 12;
+
+    // Mandra Pa (semitone 7) to Taar Pa (semitone 31)
+    const lowMidi = saNote + 7 + shiftSemitones;
+    const highMidi = saNote + 31 + shiftSemitones;
+
+    const lowNote = midiToNoteName(lowMidi);
+    const highNote = midiToNoteName(highMidi);
+
+    range.textContent = `${lowNote}–${highNote}`;
+  };
+
+  updateRange(bansuriKey, octaveShift);
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(range);
+  container.appendChild(wrapper);
+
+  return {
+    element: wrapper,
+    update(key, shift) {
+      updateRange(key, shift);
+    }
+  };
+}
+
+/**
  * Create piano keyboard input
  * @param {HTMLElement} container - Container element
  * @param {Function} onNoteSelect - Callback when note is selected
@@ -230,6 +355,7 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
     startOctave = 3,
     numOctaves = 2,
     bansuriKey = 'G',
+    octaveShift = 0,
     width = 600,
     height = 120
   } = options;
@@ -250,6 +376,16 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
 
   const keys = [];
 
+  // Helper function to check if a piano key is within the shifted playable range
+  const isInShiftedRange = (midiNote) => {
+    const saNote = BANSURI_KEYS[bansuriKey];
+    const shiftSemitones = octaveShift * 12;
+    // Playable range: Mandra Pa (semitone 7) to Taar Pa (semitone 31)
+    const lowMidi = saNote + 7 + shiftSemitones;
+    const highMidi = saNote + 31 + shiftSemitones;
+    return midiNote >= lowMidi && midiNote <= highMidi;
+  };
+
   // White keys first (so black keys render on top)
   const whiteNotes = [0, 2, 4, 5, 7, 9, 11]; // C, D, E, F, G, A, B
   const blackNotes = [1, 3, 6, 8, 10]; // C#, D#, F#, G#, A#
@@ -260,7 +396,7 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
     whiteNotes.forEach((noteOffset, i) => {
       const midiNote = (octave + 1) * 12 + noteOffset;
       const x = whiteKeyIndex * whiteKeyWidth;
-      const playable = isPlayable(midiNote, bansuriKey);
+      const playable = isInShiftedRange(midiNote);
 
       const key = document.createElementNS(SVG_NS, 'rect');
       key.setAttribute('x', x);
@@ -304,7 +440,7 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
       const noteOffset = blackNotes[i];
       const midiNote = (octave + 1) * 12 + noteOffset;
       const x = (whiteKeyIndex + pos + 1) * whiteKeyWidth - blackKeyWidth / 2;
-      const playable = isPlayable(midiNote, bansuriKey);
+      const playable = isInShiftedRange(midiNote);
 
       const key = document.createElementNS(SVG_NS, 'rect');
       key.setAttribute('x', x);
@@ -346,9 +482,14 @@ function createPianoKeyboard(container, onNoteSelect, options = {}) {
     element: wrapper,
     svg,
     keys,
-    updatePlayableNotes(newBansuriKey) {
+    updatePlayableNotes(newBansuriKey, newOctaveShift) {
+      const saNote = BANSURI_KEYS[newBansuriKey];
+      const shiftSemitones = newOctaveShift * 12;
+      const lowMidi = saNote + 7 + shiftSemitones;
+      const highMidi = saNote + 31 + shiftSemitones;
+
       keys.forEach(({ element, midiNote, isBlack }) => {
-        const playable = isPlayable(midiNote, newBansuriKey);
+        const playable = midiNote >= lowMidi && midiNote <= highMidi;
         element.classList.toggle('not-playable', !playable);
 
         if (isBlack) {
@@ -684,6 +825,37 @@ function createCombinedNoteGrid(container, onNoteSelect, options = {}) {
           btn.classList.toggle('half-note-hidden', !visible);
         }
       });
+    },
+
+    updatePlayability(newBansuriKey, octaveShift) {
+      const baseMidi = BANSURI_KEYS[newBansuriKey];
+      const shiftSemitones = octaveShift * 12;
+
+      allSargamButtons.forEach((btn, i) => {
+        const semitone = parseInt(btn.dataset.semitone);
+        const shiftedMidi = baseMidi + semitone + shiftSemitones;
+        const fingering = getFingeringForMidi(shiftedMidi, newBansuriKey);
+
+        if (fingering) {
+          btn.classList.remove('disabled');
+          btn.disabled = false;
+        } else {
+          btn.classList.add('disabled');
+          btn.disabled = true;
+        }
+
+        // Also update western button
+        const westernBtn = allWesternButtons[i];
+        if (westernBtn) {
+          if (fingering) {
+            westernBtn.classList.remove('disabled');
+            westernBtn.disabled = false;
+          } else {
+            westernBtn.classList.add('disabled');
+            westernBtn.disabled = true;
+          }
+        }
+      });
     }
   };
 }
@@ -693,6 +865,8 @@ export {
   createNoteButtons,
   createTextInput,
   createKeySelector,
+  createOctaveShift,
+  createRangeDisplay,
   createPianoKeyboard,
   createSargamButtons,
   createOctaveSelector,

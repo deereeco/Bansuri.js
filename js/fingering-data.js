@@ -235,6 +235,18 @@ function isPlayable(midiNote, bansuriKey = 'G') {
   return getFingeringForMidi(midiNote, bansuriKey) !== null;
 }
 
+/**
+ * Convert MIDI note number to Western note name
+ * @param {number} midiNote - MIDI note number
+ * @returns {string} Note name like 'G4', 'C#5'
+ */
+function midiToNoteName(midiNote) {
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const octave = Math.floor(midiNote / 12) - 1;
+  const noteName = noteNames[midiNote % 12];
+  return `${noteName}${octave}`;
+}
+
 // Export for use in other modules
 export {
   OPEN,
@@ -250,6 +262,7 @@ export {
   getFingeringForSargam,
   noteNameToMidi,
   midiToFrequency,
+  midiToNoteName,
   getPlayableRange,
   isPlayable
 };
