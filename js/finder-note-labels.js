@@ -14,6 +14,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const NOTE_POSITIONS = {
   // Semitone: { holeIndex, offsetX, position, isChromatic }
   // Holes: 0=L1(250), 1=L2(350), 2=L3(450), 3=R1(550), 4=R2(650), 5=R3(800)
+  // Position: 'below' = below the flute, 'above' = on/inside the hole (for chromatic notes)
   0:  { hole: 2, offset: 0,  position: 'below', chromatic: false },  // Sa (G) - L3
   1:  { hole: 2, offset: 0,  position: 'above', chromatic: true },   // Komal Re (G#) - half on L3
   2:  { hole: 1, offset: 0,  position: 'below', chromatic: false },  // Re (A) - L2
@@ -65,7 +66,9 @@ export function createNoteLabels(svg, holes, config, bansuriKey) {
       x = holes[posInfo.hole].x + posInfo.offset;
     }
 
-    // Calculate y position (above or below)
+    // Calculate y position (on hole or below)
+    // 'above' position = on/inside hole (for chromatic notes)
+    // 'below' position = below the flute (for natural notes)
     const y = posInfo.position === 'above'
       ? centerY - labelOffsetY
       : centerY + labelOffsetY;

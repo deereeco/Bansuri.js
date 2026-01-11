@@ -22,6 +22,7 @@ npx serve
 Open in browser at `http://localhost:8000` and navigate between:
 - `index.html` - Home page with combined Sargam/Western note grid
 - `midi.html` - MIDI device input and MIDI file import
+- `finder.html` - Flute finder page showing all notes on the bansuri at once
 
 ## Architecture
 
@@ -79,14 +80,18 @@ Tone.js synthesis with flute-like envelope:
 
 ### Input Modes
 
-Two specialized main modules initialize different input interfaces:
+Three specialized main modules initialize different input interfaces:
 
 1. **main.js** (Home) - Horizontal layout with combined Sargam/Western note grid spanning Mandra Pa to Taar Pa (25 chromatic notes)
-2. **main-midi.js** - Web MIDI API device input + MIDI file import/playback, with horizontal bansuri display
+2. **main-midi.js** (MIDI) - Web MIDI API device input + MIDI file import/playback, with horizontal bansuri display
    - Integrates `midi-handler.js` for live MIDI device input
    - Integrates `midi-file-parser.js` for Standard MIDI File (.mid) parsing and timed playback
+3. **main-finder.js** (Finder) - Text input mode for finding notes on the bansuri
+   - Users enter note names (e.g., "c,d,e,f,g,a") to see them highlighted on the bansuri
+   - Shows all 12 chromatic notes labeled around the horizontal bansuri
+   - Integrates `finder-note-labels.js` for note label positioning and highlighting
 
-Both pages share the same horizontal layout with compact settings bar at top and large horizontal bansuri at bottom. All modes share the fingering-data core.
+All pages share the same horizontal layout with compact settings bar at top and large horizontal bansuri at bottom. All modes share the fingering-data core.
 
 ### Input Handlers (js/input-handlers.js)
 
@@ -120,6 +125,40 @@ Standard MIDI File (SMF) parser and timed sequencer:
 **MIDI page tabs:**
 - **Device Input**: Live MIDI keyboard/controller input via Web MIDI API
 - **File Import**: Load and play Standard MIDI Files with tempo control
+
+### Flute Finder (js/finder-note-labels.js)
+
+Visual note labeling system for the finder page that shows all 12 chromatic notes on the bansuri:
+
+**Note Label System:**
+- `createNoteLabels(svg, holes, config, bansuriKey)` - Creates SVG note labels positioned around the horizontal bansuri
+- All 12 semitones (0-11) are labeled with Western note names
+- Each label is an SVG group containing a background circle and text element
+- Labels update dynamically when bansuri key changes
+
+**Note Positioning:**
+- **Natural notes** (non-chromatic): Positioned below the flute at the corresponding finger hole
+  - Examples: Sa, Re, Ga, Ma Tivra, Pa, Dha, Ni
+- **Chromatic notes** (half-hole fingerings): Positioned on/inside the hole, displayed in italic
+  - Examples: Komal Re, Komal Ga, Ma, Komal Dha, Komal Ni
+- Special case: Tivra Ma (all holes open) positioned at the blowhole
+
+**Note Highlighting:**
+- `highlightNotes(semitones)` - Highlights specified notes with green background (#4ade80) and black text
+- `clearHighlights()` - Removes all highlights
+- Highlighted notes have a circular green background that stands out prominently
+- Background circles are transparent by default, only visible when highlighted
+
+**Input Parsing:**
+- `parseNoteInput(input)` - Parses user input like "c,d,e" or "c d e f#" into note names
+- `noteNameToSemitone(noteName, bansuriKey)` - Converts note names to semitone values (0-11) relative to Sa
+- Supports comma-separated, space-separated, or mixed formats
+- Accepts sharps (#) and flats (b), unicode sharp (♯) and flat (♭)
+
+**Alignment Logic:**
+- Notes positioned at the last closed hole in the fingering pattern
+- Hole positions: L1(250), L2(350), L3(450), R1(550), R2(650), R3(800) with 1.5x spacing between R2-R3
+- Y-axis: Natural notes below center, chromatic notes above center (on the holes)
 
 ### Shared Utilities
 
@@ -164,13 +203,20 @@ Preferences (key, showHalfNotes) are persisted to localStorage on change.
 
 All pages feature a simplified horizontal settings bar at the top:
 
-**All pages:**
+**Home and MIDI pages:**
 - **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates Western note labels)
 - **Octave Shift controls** - Transpose audio output up/down by ±2 octaves (±24 semitones)
 - **Range display** - Shows the current effective playable range based on key and octave shift
 
 **Home page only:**
 - **Scale toggle** - "Major Only" hides komal/tivra notes, "All Notes" shows all 12 chromatic notes (uses CSS visibility to maintain layout)
+
+**Finder page only:**
+- **Bansuri Key selector** - Changes which key the bansuri is tuned to (updates all note labels)
+- **Text input field** - Enter note names (blank by default) to highlight them on the bansuri
+  - Supports formats: "c,d,e", "c d e", "c# d e f#"
+  - Invalid notes show error message below input
+  - Highlights update in real-time as user types
 
 **Removed controls** (simplified UI):
 - Volume slider - Users adjust system volume instead
@@ -180,7 +226,7 @@ All pages feature a simplified horizontal settings bar at the top:
 
 - **Tone.js** (v14.8.49 via CDN): Audio synthesis with envelope (js/audio-engine.js)
 - **Web MIDI API**: MIDI device input (js/midi-handler.js)
-- **localStorage**: User preferences persistence (bansuri key, scale toggle)
+- **localStorage**: User preferences persistence (bansuri key, scale toggle, finder page key selection)
 
 ## Notes
 
@@ -189,4 +235,7 @@ All pages feature a simplified horizontal settings bar at the top:
 - SVG rendering uses namespace methods (`createElementNS`)
 - CSS custom properties enable theme switching without JavaScript color management
 - **Unified layout**: All pages use `.horizontal-layout` class with compact settings bar at top and large horizontal bansuri at bottom
+- **Finder page note labels**: Natural notes positioned below flute, chromatic notes positioned on/inside holes (not above)
+  - Highlighted notes show green circular background (#4ade80) with black text for high visibility
+  - Background circles are transparent by default, only visible when highlighted
 - Tone.js is loaded via CDN (`<script>` tag) in all HTML pages before the module scripts

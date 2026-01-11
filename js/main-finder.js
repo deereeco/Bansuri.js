@@ -83,7 +83,7 @@ function createSettingsBar(container) {
   textInput.type = 'text';
   textInput.id = 'note-finder-input';
   textInput.className = 'note-text-input';
-  textInput.placeholder = 'e.g., c,d,e,f,g,a or c d e f a';
+  textInput.placeholder = '';
 
   const errorSpan = document.createElement('span');
   errorSpan.className = 'error-message';
