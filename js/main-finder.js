@@ -36,11 +36,20 @@ function init() {
   // Create horizontal bansuri SVG
   bansuri = createHorizontalBansuri(bansuriContainer);
 
+  // Remove finger labels (L1, L2, L3, R1, R2, R3) - not needed for finder
+  const fingerLabels = bansuri.svg.querySelector('g.finger-labels');
+  if (fingerLabels) {
+    fingerLabels.remove();
+  }
+
+  // Expand SVG viewBox to fit labels above and below
+  bansuri.svg.setAttribute('viewBox', '0 0 900 180');
+
   // Add note labels to the bansuri
   noteLabels = createNoteLabels(
     bansuri.svg,
     bansuri.holes,
-    { width: 900, height: 100 }, // Config from createHorizontalBansuri
+    { width: 900, height: 180 }, // Increased height for labels
     state.bansuriKey
   );
 

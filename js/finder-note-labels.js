@@ -13,18 +13,19 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  */
 const NOTE_POSITIONS = {
   // Semitone: { holeIndex, offsetX, position, isChromatic }
-  0:  { hole: 2, offset: 0,  position: 'below', chromatic: false },  // Sa (C)
-  1:  { hole: 2, offset: 0,  position: 'above', chromatic: true },   // Komal Re (C#)
-  2:  { hole: 1, offset: 0,  position: 'below', chromatic: false },  // Re (D)
-  3:  { hole: 1, offset: 0,  position: 'above', chromatic: true },   // Komal Ga (D#)
-  4:  { hole: 0, offset: 0,  position: 'below', chromatic: false },  // Ga (E)
-  5:  { hole: 0, offset: 0,  position: 'above', chromatic: true },   // Ma (F) - half on L1
-  6:  { hole: -1, offset: 0, position: 'below', chromatic: false },  // Tivra Ma (F#) - all open, at blowhole
-  7:  { hole: 5, offset: 20, position: 'below', chromatic: false },  // Pa (G) - all closed, past R3
-  8:  { hole: 5, offset: 0,  position: 'above', chromatic: true },   // Komal Dha (G#)
-  9:  { hole: 5, offset: 0,  position: 'below', chromatic: false },  // Dha (A)
-  10: { hole: 4, offset: 0,  position: 'above', chromatic: true },   // Komal Ni (A#)
-  11: { hole: 4, offset: 0,  position: 'below', chromatic: false }   // Ni (B)
+  // Holes: 0=L1(250), 1=L2(350), 2=L3(450), 3=R1(550), 4=R2(650), 5=R3(800)
+  0:  { hole: 2, offset: 0,  position: 'below', chromatic: false },  // Sa (G) - L3
+  1:  { hole: 2, offset: 0,  position: 'above', chromatic: true },   // Komal Re (G#) - half on L3
+  2:  { hole: 1, offset: 0,  position: 'below', chromatic: false },  // Re (A) - L2
+  3:  { hole: 1, offset: 0,  position: 'above', chromatic: true },   // Komal Ga (A#) - half on L2
+  4:  { hole: 0, offset: 0,  position: 'below', chromatic: false },  // Ga (B) - L1
+  5:  { hole: 0, offset: 0,  position: 'above', chromatic: true },   // Ma (C) - half on L1
+  6:  { hole: -1, offset: 0, position: 'below', chromatic: false },  // Tivra Ma (C#) - all open, blowhole
+  7:  { hole: 5, offset: 0, position: 'below', chromatic: false },  // Pa (D) - all closed, at R3
+  8:  { hole: 5, offset: 0,  position: 'above', chromatic: true },   // Komal Dha (D#) - half on R3
+  9:  { hole: 4, offset: 0,  position: 'below', chromatic: false },  // Dha (E) - R3 open, last closed is R2
+  10: { hole: 4, offset: 0,  position: 'above', chromatic: true },   // Komal Ni (F) - half on R2
+  11: { hole: 3, offset: 0,  position: 'below', chromatic: false }   // Ni (F#) - R2,R3 open, last closed is R1
 };
 
 /**
@@ -49,6 +50,11 @@ export function createNoteLabels(svg, holes, config, bansuriKey) {
     const posInfo = NOTE_POSITIONS[semitone];
     const fingering = FINGERING_PATTERNS[semitone];
 
+    // Get Western note name for current key
+    const baseMidi = BANSURI_KEYS[bansuriKey];
+    const midiNote = baseMidi + semitone;
+    const westernNote = midiToNoteName(midiNote).replace(/\d/g, ''); // Remove octave number
+
     // Calculate x position based on hole position
     let x;
     if (posInfo.hole === -1) {
@@ -63,11 +69,6 @@ export function createNoteLabels(svg, holes, config, bansuriKey) {
     const y = posInfo.position === 'above'
       ? centerY - labelOffsetY
       : centerY + labelOffsetY;
-
-    // Get Western note name for current key
-    const baseMidi = BANSURI_KEYS[bansuriKey];
-    const midiNote = baseMidi + semitone;
-    const westernNote = midiToNoteName(midiNote).replace(/\d/g, ''); // Remove octave number
 
     // Create text element
     const text = createLabelText(x, y, westernNote, fingering.indian, semitone, posInfo.chromatic);

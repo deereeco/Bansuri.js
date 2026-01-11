@@ -1425,7 +1425,7 @@ input:focus-visible {
 /* Note labels on SVG */
 .note-label {
   font-family: Arial, sans-serif;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: bold;
   fill: var(--text-secondary);
   transition: all 0.2s ease;
@@ -1436,24 +1436,31 @@ input:focus-visible {
 /* Chromatic notes (half-holes) - italic style */
 .note-label.chromatic {
   font-style: italic;
-  fill: var(--text-tertiary);
+  fill: var(--text-secondary);
 }
 
 /* Highlighted labels */
 .note-label.highlighted {
   fill: var(--accent-primary);
-  font-size: 14px;
+  font-size: 18px;
   filter: drop-shadow(0 0 3px var(--accent-primary));
+}
+
+/* Make the bansuri larger on finder page */
+.finder-info-section ~ .bansuri-section svg {
+  max-width: 100%;
+  height: auto;
+  min-height: 200px;
 }
 
 /* Responsive adjustments for finder page */
 @media (max-width: 600px) {
   .note-label {
-    font-size: 10px;
+    font-size: 14px;
   }
 
   .note-label.highlighted {
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .note-text-input {
