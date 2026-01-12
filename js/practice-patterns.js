@@ -21,9 +21,9 @@ export const PRACTICE_PATTERNS = [
   // Beginner patterns (5 to start)
   {
     id: 'basic-ascent-4',
-    name: 'Basic 4-Note Ascent',
+    name: 'Chaturswara Aroha Alankar',
     category: 'Beginner',
-    description: 'Sa Re Ga Ma, Re Ga Ma Pa, Ga Ma Pa Dha. Progressive 4-note ascending pattern - the foundation of Palta practice.',
+    description: 'चतुरस्वर आरोह अलंकार - Four-note ascending pattern. Sa Re Ga Ma, Re Ga Ma Pa, Ga Ma Pa Dha. Foundation of systematic practice.',
     tempo: 80,
     notes: [
       // Sa Re Ga Ma
@@ -56,9 +56,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'returning-2note',
-    name: 'Returning 2-Note Pattern',
+    name: 'Dwiswara Palta',
     category: 'Beginner',
-    description: 'Sa Re Sa Re, Re Ga Re Ga, Ga Ma Ga Ma... Each note returns to the previous, building muscle memory.',
+    description: 'द्विस्वर पलटा - Two-note returning pattern. Sa Re Sa Re, Re Ga Re Ga, Ga Ma Ga Ma. Builds finger memory through repetition.',
     tempo: 100,
     notes: [
       // Sa Re Sa Re
@@ -87,9 +87,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'full-scale-ascending',
-    name: 'Full Ascending Scale',
+    name: 'Saptak Aroha',
     category: 'Beginner',
-    description: 'Sa Re Ga Ma Pa Dha Ni Sa. Complete ascending major scale - builds familiarity with all natural notes.',
+    description: 'सप्तक आरोह - Complete ascending octave. Sa Re Ga Ma Pa Dha Ni Sa. Builds familiarity with all Shuddha swaras.',
     tempo: 80,
     notes: [
       { semitone: 0, beats: 1 },   // Sa
@@ -105,9 +105,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'full-scale-descending',
-    name: 'Full Descending Scale',
+    name: 'Saptak Avaroha',
     category: 'Beginner',
-    description: 'Sa Ni Dha Pa Ma Ga Re Sa. Complete descending major scale - complements the ascending practice.',
+    description: 'सप्तक अवरोह - Complete descending octave. Sa Ni Dha Pa Ma Ga Re Sa. Complements Aroha practice.',
     tempo: 80,
     notes: [
       { semitone: 12, beats: 1 },  // Sa' (upper octave)
@@ -123,9 +123,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'slow-tonic',
-    name: 'Slow Tonic (Sa) Practice',
+    name: 'Shadja Sadhana',
     category: 'Beginner',
-    description: 'Sa Sa Sa Sa Sa Sa Sa Sa. Sustained tonic note practice for breath control and tone quality. Hold each note steady.',
+    description: 'षड्ज साधना - Tonic note practice. Sa Sa Sa Sa Sa Sa Sa Sa. Develops breath control (Pranayama) and tone quality (Nada Shuddhi).',
     tempo: 60,
     notes: [
       { semitone: 0, beats: 2 },
@@ -141,9 +141,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'basic-descent-4',
-    name: 'Basic 4-Note Descent',
+    name: 'Chaturswara Avaroha Alankar',
     category: 'Beginner',
-    description: 'Sa Ni Dha Pa, Ni Dha Pa Ma, Dha Pa Ma Ga. Progressive 4-note descending pattern - complements ascending practice.',
+    description: 'चतुरस्वर अवरोह अलंकार - Four-note descending pattern. Sa Ni Dha Pa, Ni Dha Pa Ma, Dha Pa Ma Ga. Complements Aroha practice.',
     tempo: 80,
     notes: [
       // Sa Ni Dha Pa (from upper Sa)
@@ -176,9 +176,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'simple-3note',
-    name: 'Simple 3-Note Groups',
+    name: 'Triswara Alankar',
     category: 'Beginner',
-    description: 'Sa Re Ga, Re Ga Ma, Ga Ma Pa... Three-note ascending groups - shorter phrases for beginners.',
+    description: 'त्रिस्वर अलंकार - Three-note groups. Sa Re Ga, Re Ga Ma, Ga Ma Pa. Shorter phrases ideal for beginners.',
     tempo: 90,
     notes: [
       // Sa Re Ga
@@ -198,9 +198,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'pa-practice',
-    name: 'Pa (Fifth) Practice',
+    name: 'Panchama Sadhana',
     category: 'Beginner',
-    description: 'Pa Pa Pa Pa Pa Pa Pa Pa. Sustained Pa note practice - important for establishing the fifth. Focus on steady tone.',
+    description: 'पञ्चम साधना - Fifth note practice. Pa Pa Pa Pa Pa Pa Pa Pa. Essential for establishing the Panchama swara.',
     tempo: 60,
     notes: [
       { semitone: 7, beats: 2 },
@@ -217,9 +217,9 @@ export const PRACTICE_PATTERNS = [
   // Intermediate patterns
   {
     id: '5note-groups',
-    name: '5-Note Ascending Groups',
+    name: 'Panchaswara Alankar',
     category: 'Intermediate',
-    description: 'Sa Re Ga Ma Pa, Re Ga Ma Pa Dha, Ga Ma Pa Dha Ni. Five-note progressive groups - builds stamina and fluidity.',
+    description: 'पञ्चस्वर अलंकार - Five-note groups. Sa Re Ga Ma Pa, Re Ga Ma Pa Dha, Ga Ma Pa Dha Ni. Builds stamina and fluidity.',
     tempo: 90,
     notes: [
       // Sa Re Ga Ma Pa
@@ -239,9 +239,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'reverse-groups',
-    name: 'Reverse 4-Note Groups',
+    name: 'Pratiloma Alankar',
     category: 'Intermediate',
-    description: 'Ma Ga Re Sa, Pa Ma Ga Re, Dha Pa Ma Ga. Descending groups starting from different notes - challenges finger patterns.',
+    description: 'प्रतिलोम अलंकार - Reverse pattern. Ma Ga Re Sa, Pa Ma Ga Re, Dha Pa Ma Ga. Challenges established finger memory.',
     tempo: 85,
     notes: [
       // Ma Ga Re Sa
@@ -259,9 +259,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'skip-patterns',
-    name: 'Skip Interval Pattern',
+    name: 'Koodaka Alankar',
     category: 'Intermediate',
-    description: 'Sa Ga Pa Sa, Re Ma Dha Re, Ga Pa Ni Ga. Skipping notes builds agility and interval recognition.',
+    description: 'कूदक अलंकार - Skipping pattern. Sa Ga Pa Sa, Re Ma Dha Re, Ga Pa Ni Ga. Develops agility across intervals.',
     tempo: 80,
     notes: [
       // Sa Ga Pa Sa
@@ -279,9 +279,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'octave-jumps',
-    name: 'Octave Jump Exercise',
+    name: 'Saptak Lankhan',
     category: 'Intermediate',
-    description: 'Sa Sa\' Sa Sa\', Re Re\' Re Re\'... Jumping octaves builds breath control and register transitions.',
+    description: 'सप्तक लंघन - Octave jumping. Sa Sa\' Sa Sa\', Re Re\' Re Re\'. Builds breath control (Pranayama) for register changes.',
     tempo: 70,
     notes: [
       // Sa Sa' Sa Sa'
@@ -299,9 +299,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'pendulum',
-    name: 'Pendulum Pattern',
+    name: 'Gati Parivartan Palta',
     category: 'Intermediate',
-    description: 'Sa Re Ga Ma Ga Re, Re Ga Ma Pa Ma Ga. Swinging pattern that ascends then returns - develops smooth direction changes.',
+    description: 'गति परिवर्तन पलटा - Direction-changing pattern. Sa Re Ga Ma Ga Re, Re Ga Ma Pa Ma Ga. Develops smooth transitions.',
     tempo: 85,
     notes: [
       // Sa Re Ga Ma Ga Re
@@ -321,9 +321,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'chromatic',
-    name: 'Chromatic Scale Practice',
+    name: 'Komal-Tivra Sadhana',
     category: 'Intermediate',
-    description: 'Sa komal-Re Re komal-Ga Ga Ma tivra-Ma... All 12 semitones - introduces half-hole fingerings.',
+    description: 'कोमल-तीव्र साधना - Chromatic practice. Sa komal-Re Re komal-Ga Ga Ma tivra-Ma. All 12 swaras including Vikrit swaras.',
     tempo: 70,
     notes: [
       { semitone: 0, beats: 1 },   // Sa
@@ -345,9 +345,9 @@ export const PRACTICE_PATTERNS = [
   // Advanced patterns
   {
     id: 'fast-triplets',
-    name: 'Fast Triplet Pattern',
+    name: 'Drut Tisra Gati',
     category: 'Advanced',
-    description: 'Sa Re Ga Sa Re Ga Sa Re Ga... Rapid triplet groups ascending the scale - builds speed and evenness.',
+    description: 'द्रुत तिस्र गति - Fast triplets. Sa Re Ga Sa Re Ga Sa Re Ga. Develops Drut laya (fast tempo) control and evenness.',
     tempo: 120,
     notes: [
       // Sa Re Ga repeated ascending
@@ -373,9 +373,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'complex-ascending',
-    name: 'Complex Ascending Palta',
+    name: 'Sankeerna Alankar',
     category: 'Advanced',
-    description: 'Sa Re Ga Ma Pa Ma Ga Re, Re Ga Ma Pa Dha Pa Ma Ga... Advanced pattern with direction reversals.',
+    description: 'संकीर्ण अलंकार - Complex ornamental pattern. Sa Re Ga Ma Pa Ma Ga Re, Re Ga Ma Pa Dha Pa Ma Ga. Advanced Aroha-Avaroha combination.',
     tempo: 90,
     notes: [
       // Sa Re Ga Ma Pa Ma Ga Re
@@ -392,9 +392,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'taan-simulation',
-    name: 'Taan Simulation',
+    name: 'Taan Abhyas',
     category: 'Advanced',
-    description: 'Sa Re Sa Ga Sa Ma Sa Pa Sa Ma Sa Ga Sa Re Sa. Rapid taan-like pattern returning to Sa - mimics classical improvisation.',
+    description: 'तान अभ्यास - Fast melodic run practice. Sa Re Sa Ga Sa Ma Sa Pa Sa Ma Sa Ga Sa Re Sa. Prepares for classical improvisation.',
     tempo: 110,
     notes: [
       { semitone: 0, beats: 0.5 }, { semitone: 2, beats: 0.5 }, { semitone: 0, beats: 0.5 }, { semitone: 4, beats: 0.5 },
@@ -410,9 +410,9 @@ export const PRACTICE_PATTERNS = [
 
   {
     id: 'full-range',
-    name: 'Full Range Exercise',
+    name: 'Saptak Traya Sadhana',
     category: 'Advanced',
-    description: 'Mandra Pa through Taar Pa. Complete playable range of the bansuri - ultimate breath and control challenge.',
+    description: 'सप्तक त्रय साधना - Three-octave practice. Mandra Pa through Taar Pa. Complete bansuri range mastery.',
     tempo: 75,
     notes: [
       // Start from mandra Pa (semitone -5 from madhya Sa)
