@@ -247,6 +247,49 @@ function midiToNoteName(midiNote) {
   return `${noteName}${octave}`;
 }
 
+/**
+ * Get fingering pattern by semitone offset from Sa, regardless of octave or range
+ * This always returns a fingering pattern based on the note's position in the scale
+ * Useful for display when audio may be shifted outside normal range
+ * @param {number} semitonesFromSa - Semitones from Sa (can be any value)
+ * @param {number} midiNote - MIDI note number for reference
+ * @param {string} bansuriKey - The key of the bansuri
+ * @returns {object} Fingering information
+ */
+function getFingeringBySemitone(semitonesFromSa, midiNote, bansuriKey = 'G') {
+  // Normalize to 0-11 range (one octave)
+  const normalizedSemitones = ((semitonesFromSa % 12) + 12) % 12;
+
+  // Determine which octave this would be in
+  let octave;
+  if (semitonesFromSa < 12) {
+    octave = OCTAVES.LOW;
+  } else if (semitonesFromSa < 24) {
+    octave = OCTAVES.MIDDLE;
+  } else {
+    octave = OCTAVES.HIGH;
+  }
+
+  // Get fingering pattern
+  const pattern = FINGERING_PATTERNS[normalizedSemitones];
+  if (!pattern) return null;
+
+  // Get Western note name
+  const noteIndex = midiNote % 12;
+  const octaveNumber = Math.floor(midiNote / 12) - 1;
+  const westernNote = NOTES[noteIndex] + octaveNumber;
+
+  return {
+    midiNote,
+    westernNote,
+    indianNote: pattern.indian,
+    octave,
+    holes: [...pattern.holes],
+    bansuriKey,
+    semitonesFromSa: normalizedSemitones
+  };
+}
+
 // Export for use in other modules
 export {
   OPEN,
@@ -260,6 +303,7 @@ export {
   getFingeringForMidi,
   getFingeringForNote,
   getFingeringForSargam,
+  getFingeringBySemitone,
   noteNameToMidi,
   midiToFrequency,
   midiToNoteName,

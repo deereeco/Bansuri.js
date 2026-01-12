@@ -365,6 +365,9 @@ export function createMIDIFileInput(container, onParsed) {
       status.textContent = `Loaded: ${file.name} (${midiData.notes.length} notes)`;
       status.className = 'file-status success';
 
+      // Cache the MIDI file to localStorage
+      saveMIDIFileToCache(arrayBuffer, file.name);
+
       onParsed(midiData);
     } catch (error) {
       status.textContent = `Error: ${error.message}`;
@@ -377,7 +380,26 @@ export function createMIDIFileInput(container, onParsed) {
   container.appendChild(fileInput);
   container.appendChild(status);
 
-  return { fileInput, button, status };
+  // Function to load cached MIDI file
+  const loadCachedFile = () => {
+    const cached = loadMIDIFileFromCache();
+    if (cached) {
+      try {
+        const midiData = parseMIDI(cached.arrayBuffer);
+        status.textContent = `Loaded from cache: ${cached.fileName} (${midiData.notes.length} notes)`;
+        status.className = 'file-status success';
+        onParsed(midiData);
+        return true;
+      } catch (error) {
+        console.error('Failed to load cached MIDI file:', error);
+        clearMIDIFileCache();
+        return false;
+      }
+    }
+    return false;
+  };
+
+  return { fileInput, button, status, loadCachedFile };
 }
 
 /**
@@ -814,4 +836,70 @@ export function createTimedNoteSequencer(container, onNoteChange, audioEngine, o
       return isPlaying;
     }
   };
+}
+
+/**
+ * Save MIDI file to localStorage cache
+ * @param {ArrayBuffer} arrayBuffer - Raw MIDI file data
+ * @param {string} fileName - Original file name
+ */
+function saveMIDIFileToCache(arrayBuffer, fileName) {
+  try {
+    // Convert ArrayBuffer to base64 for storage
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    const cache = {
+      fileName,
+      fileData: base64,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem('bansuri-cached-midi', JSON.stringify(cache));
+    console.log(`Cached MIDI file: ${fileName} (${(base64.length / 1024).toFixed(1)} KB)`);
+  } catch (error) {
+    console.warn('Failed to cache MIDI file:', error);
+  }
+}
+
+/**
+ * Load MIDI file from localStorage cache
+ * @returns {object|null} Object with arrayBuffer and fileName, or null if no cache
+ */
+function loadMIDIFileFromCache() {
+  try {
+    const cached = localStorage.getItem('bansuri-cached-midi');
+    if (!cached) return null;
+
+    const { fileName, fileData } = JSON.parse(cached);
+
+    // Convert base64 back to ArrayBuffer
+    const binary = atob(fileData);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    return { arrayBuffer, fileName };
+  } catch (error) {
+    console.warn('Failed to load cached MIDI file:', error);
+    clearMIDIFileCache();
+    return null;
+  }
+}
+
+/**
+ * Clear MIDI file cache from localStorage
+ */
+function clearMIDIFileCache() {
+  try {
+    localStorage.removeItem('bansuri-cached-midi');
+  } catch (error) {
+    console.warn('Failed to clear MIDI file cache:', error);
+  }
 }

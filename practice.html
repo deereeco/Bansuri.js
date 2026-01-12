@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bansuri.js - MIDI Input</title>
+  <title>Bansuri.js - Practice Paltas & Alankars</title>
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
@@ -13,14 +13,14 @@
       <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">
         <span class="hamburger-icon">☰</span>
       </button>
-      <h1 class="app-title">Bansuri.js - MIDI</h1>
+      <h1 class="app-title">Bansuri.js - Practice</h1>
       <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
       <nav class="nav-dropdown" hidden>
         <a href="index.html" class="nav-link">
           <span class="nav-icon">🏠</span>
           <span class="nav-label">Home</span>
         </a>
-        <a href="midi.html" class="nav-link active" aria-current="page">
+        <a href="midi.html" class="nav-link">
           <span class="nav-icon">🎛️</span>
           <span class="nav-label">MIDI</span>
         </a>
@@ -28,7 +28,7 @@
           <span class="nav-icon">🔍</span>
           <span class="nav-label">Finder</span>
         </a>
-        <a href="practice.html" class="nav-link">
+        <a href="practice.html" class="nav-link active" aria-current="page">
           <span class="nav-icon">🎵</span>
           <span class="nav-label">Practice</span>
         </a>
@@ -41,30 +41,16 @@
         <div id="settings-bar" class="settings-bar"></div>
       </section>
 
-      <!-- Note info display -->
-      <section class="note-info-section">
-        <div id="note-info" class="note-info"></div>
+      <!-- Practice controls section -->
+      <section class="practice-controls-section">
+        <div id="pattern-selector" class="pattern-selector-container"></div>
+        <div id="tempo-control" class="tempo-control-container"></div>
+        <div id="playback-controls" class="playback-controls-container"></div>
       </section>
 
-      <!-- Tabbed Interface -->
-      <section class="controls-section">
-        <div class="tab-container">
-          <div class="tab-buttons">
-            <button class="tab-btn active" data-tab="device">Device Input</button>
-            <button class="tab-btn" data-tab="file">File Import</button>
-          </div>
-
-          <div class="tab-content active" id="tab-device">
-            <div id="midi-status" class="midi-status"></div>
-          </div>
-
-          <div class="tab-content" id="tab-file">
-            <div id="file-input-container" class="file-input-container"></div>
-            <div id="tempo-control-container" class="tempo-control-container"></div>
-            <div id="piano-roll-container" class="piano-roll-container"></div>
-            <div id="sequencer-container" class="sequencer-container"></div>
-          </div>
-        </div>
+      <!-- Pattern description -->
+      <section class="pattern-info-section">
+        <div id="pattern-description"></div>
       </section>
 
       <!-- Horizontal bansuri at bottom -->
@@ -84,6 +70,6 @@
 
   <script type="module" src="js/theme.js"></script>
   <script type="module" src="js/nav.js"></script>
-  <script type="module" src="js/main-midi.js"></script>
+  <script type="module" src="js/main-practice.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
  * MIDI device input for bansuri fingering visualization
  */
 
-import { getFingeringForMidi, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
+import { getFingeringForMidi, getFingeringBySemitone, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote } from './audio-engine.js';
 import { createKeySelector, createOctaveShift, createRangeDisplay } from './input-handlers.js';
@@ -173,8 +173,9 @@ function initFileTab() {
   const sequencerContainer = document.getElementById('sequencer-container');
 
   // Create file input
+  let fileInputComponent = null;
   if (fileInputContainer) {
-    createMIDIFileInput(fileInputContainer, handleMIDIFileParsed);
+    fileInputComponent = createMIDIFileInput(fileInputContainer, handleMIDIFileParsed);
   }
 
   // Create tempo control
@@ -199,6 +200,14 @@ function initFileTab() {
       audioEngineRef,
       handleTimeUpdate  // Pass time update callback for piano roll
     );
+  }
+
+  // Auto-load cached MIDI file if available
+  if (fileInputComponent && fileInputComponent.loadCachedFile) {
+    // Use setTimeout to ensure all components are initialized
+    setTimeout(() => {
+      fileInputComponent.loadCachedFile();
+    }, 100);
   }
 }
 
@@ -239,8 +248,12 @@ function handleTempoChange(multiplier) {
 function handleSequencerNoteChange(noteData) {
   const shiftedNote = noteData.midiNote + (state.octaveShift * 12);
 
-  // Get fingering for the BASE (unshifted) note to show the fingering pattern
-  const fingering = getFingeringForMidi(noteData.midiNote, state.bansuriKey);
+  // Calculate semitones from Sa to always show fingering pattern regardless of range
+  const baseMidi = BANSURI_KEYS[state.bansuriKey];
+  const semitonesFromSa = noteData.midiNote - baseMidi;
+
+  // Get fingering for the note to show the fingering pattern (regardless of octave/range)
+  const fingering = getFingeringBySemitone(semitonesFromSa, noteData.midiNote, state.bansuriKey);
 
   if (fingering) {
     state.currentFingering = fingering;
@@ -308,8 +321,12 @@ function setupMidiHandlers() {
 
     const shiftedNote = note + (state.octaveShift * 12);
 
-    // Get fingering for the BASE (unshifted) note to show the fingering pattern
-    const fingering = getFingeringForMidi(note, state.bansuriKey);
+    // Calculate semitones from Sa to always show fingering pattern regardless of range
+    const baseMidi = BANSURI_KEYS[state.bansuriKey];
+    const semitonesFromSa = note - baseMidi;
+
+    // Get fingering for the note to show the fingering pattern (regardless of octave/range)
+    const fingering = getFingeringBySemitone(semitonesFromSa, note, state.bansuriKey);
 
     if (fingering) {
       state.currentFingering = fingering;
@@ -347,7 +364,9 @@ function handleKeyChange(newKey) {
   }
 
   if (state.currentFingering) {
-    const newFingering = getFingeringForMidi(state.currentFingering.midiNote, newKey);
+    const baseMidi = BANSURI_KEYS[newKey];
+    const semitonesFromSa = state.currentFingering.midiNote - baseMidi;
+    const newFingering = getFingeringBySemitone(semitonesFromSa, state.currentFingering.midiNote, newKey);
     if (newFingering) {
       bansuri.setFingering(newFingering);
       updateNoteInfo(newFingering);
@@ -372,7 +391,9 @@ function handleOctaveShiftChange(newShift) {
 
   // Re-display current fingering if exists
   if (state.currentFingering) {
-    const newFingering = getFingeringForMidi(state.currentFingering.midiNote, state.bansuriKey);
+    const baseMidi = BANSURI_KEYS[state.bansuriKey];
+    const semitonesFromSa = state.currentFingering.midiNote - baseMidi;
+    const newFingering = getFingeringBySemitone(semitonesFromSa, state.currentFingering.midiNote, state.bansuriKey);
     if (newFingering) {
       bansuri.setFingering(newFingering);
       updateNoteInfo(newFingering);

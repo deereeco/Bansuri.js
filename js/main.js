@@ -3,7 +3,7 @@
  * New horizontal layout with combined Sargam/Western note grid
  */
 
-import { getFingeringForMidi, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
+import { getFingeringForMidi, getFingeringBySemitone, midiToFrequency, midiToNoteName, BANSURI_KEYS } from './fingering-data.js';
 import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playTap } from './audio-engine.js';
 import { createKeySelector, createOctaveShift, createRangeDisplay, createCombinedNoteGrid } from './input-handlers.js';
@@ -181,9 +181,10 @@ function handleNoteSelect(sargamNote, midiNote, semitone) {
   const shiftSemitones = state.octaveShift * 12;
   const shiftedMidiNote = baseMidi + semitone + shiftSemitones;
 
-  // Get fingering for the BASE (unshifted) note to show the fingering pattern
+  // Get fingering for the note to show the fingering pattern (regardless of octave/range)
   const baseNote = baseMidi + semitone;
-  const fingering = getFingeringForMidi(baseNote, state.bansuriKey);
+  const semitonesFromSa = semitone;
+  const fingering = getFingeringBySemitone(semitonesFromSa, baseNote, state.bansuriKey);
 
   if (fingering) {
     state.currentFingering = fingering;
@@ -227,11 +228,12 @@ function handleKeyChange(newKey) {
     if (semitone !== undefined) {
       // Recalculate based on new key
       const baseMidi = BANSURI_KEYS[newKey];
-      const newMidiNote = baseMidi + semitone +
-        (state.currentFingering.octave === 'madhya' ? 12 :
-         state.currentFingering.octave === 'taar' ? 24 : 0);
+      const octaveOffset = state.currentFingering.octave === 'madhya' ? 12 :
+                           state.currentFingering.octave === 'taar' ? 24 : 0;
+      const newMidiNote = baseMidi + semitone + octaveOffset;
+      const semitonesFromSa = semitone + octaveOffset;
 
-      const newFingering = getFingeringForMidi(newMidiNote, newKey);
+      const newFingering = getFingeringBySemitone(semitonesFromSa, newMidiNote, newKey);
       if (newFingering) {
         bansuri.setFingering(newFingering);
         updateNoteInfo(newFingering);
@@ -260,8 +262,9 @@ function handleOctaveShiftChange(newShift) {
     const octaveOffset = state.currentFingering.octave === 'madhya' ? 12 :
                          state.currentFingering.octave === 'taar' ? 24 : 0;
     const newMidiNote = baseMidi + semitone + octaveOffset;
+    const semitonesFromSa = semitone + octaveOffset;
 
-    const newFingering = getFingeringForMidi(newMidiNote, state.bansuriKey);
+    const newFingering = getFingeringBySemitone(semitonesFromSa, newMidiNote, state.bansuriKey);
     if (newFingering) {
       bansuri.setFingering(newFingering);
       updateNoteInfo(newFingering);
