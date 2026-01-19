@@ -8,7 +8,7 @@ import { createHorizontalBansuri } from './bansuri-svg.js';
 import { initAudio, playMidi, stopNote } from './audio-engine.js';
 import { createKeySelector, createOctaveShift, createRangeDisplay } from './input-handlers.js';
 import { initMidi, onNoteOn, onNoteOff, createMidiStatusDisplay } from './midi-handler.js';
-import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer, createPianoRoll } from './midi-file-parser.js';
+import { parseMIDI, createMIDIFileInput, createTempoControl, createTimedNoteSequencer, createPianoRoll, extractUniqueNotes, createUniqueNotesDisplay } from './midi-file-parser.js';
 
 // Application state
 const state = {
@@ -29,6 +29,7 @@ let rangeDisplay = null;
 let midiStatus = null;
 let sequencer = null;
 let pianoRoll = null;
+let uniqueNotesDisplay = null;
 
 // Audio engine reference that wraps audio functions
 // This object is created immediately so sequencer can use it,
@@ -183,6 +184,12 @@ function initFileTab() {
     createTempoControl(tempoControlContainer, handleTempoChange);
   }
 
+  // Create unique notes display
+  const uniqueNotesContainer = document.getElementById('unique-notes-container');
+  if (uniqueNotesContainer) {
+    uniqueNotesDisplay = createUniqueNotesDisplay(uniqueNotesContainer);
+  }
+
   // Create piano roll visualization
   if (pianoRollContainer) {
     pianoRoll = createPianoRoll(pianoRollContainer, {
@@ -221,6 +228,11 @@ function handleMIDIFileParsed(midiData) {
   }
   if (pianoRoll) {
     pianoRoll.setNotes(midiData.notes, state.bansuriKey);
+  }
+  // Update unique notes display
+  if (uniqueNotesDisplay && midiData.notes && midiData.notes.length > 0) {
+    const uniqueNotes = extractUniqueNotes(midiData.notes);
+    uniqueNotesDisplay.update(uniqueNotes);
   }
 }
 

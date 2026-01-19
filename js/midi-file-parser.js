@@ -323,6 +323,30 @@ function assembleNotes(tracks, division, tempoMap) {
 }
 
 /**
+ * Extract unique chromatic note names from MIDI notes, ignoring octaves
+ * @param {Array<object>} notes - Array of note objects with noteName property
+ * @returns {Array<string>} Sorted array of unique chromatic note names
+ */
+export function extractUniqueNotes(notes) {
+  if (!notes || notes.length === 0) return [];
+
+  const uniqueNotes = new Set();
+  notes.forEach(note => {
+    if (note.noteName) {
+      // Strip octave number (e.g., "C4" -> "C", "C#5" -> "C#")
+      const chromatic = note.noteName.replace(/\d/g, '');
+      uniqueNotes.add(chromatic);
+    }
+  });
+
+  // Convert to array and sort in chromatic order
+  const noteOrder = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  return Array.from(uniqueNotes).sort((a, b) =>
+    noteOrder.indexOf(a) - noteOrder.indexOf(b)
+  );
+}
+
+/**
  * Convert MIDI note number to Western note name
  */
 function midiNoteToName(midiNote) {
@@ -400,6 +424,81 @@ export function createMIDIFileInput(container, onParsed) {
   };
 
   return { fileInput, button, status, loadCachedFile };
+}
+
+/**
+ * Create unique notes display component with copy button
+ * @param {HTMLElement} container - Parent container element
+ * @returns {object} Controller with update() method
+ */
+export function createUniqueNotesDisplay(container) {
+  // Create HTML structure
+  const wrapper = document.createElement('div');
+  wrapper.className = 'unique-notes-wrapper';
+  wrapper.style.display = 'none'; // Hidden initially
+
+  const header = document.createElement('div');
+  header.className = 'unique-notes-header';
+
+  const label = document.createElement('span');
+  label.className = 'unique-notes-label';
+  label.textContent = 'Unique notes:';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'unique-notes-copy-btn';
+  copyBtn.textContent = 'Copy';
+
+  const notesList = document.createElement('div');
+  notesList.className = 'unique-notes-list';
+  notesList.textContent = 'No notes';
+
+  const feedback = document.createElement('div');
+  feedback.className = 'unique-notes-feedback';
+  feedback.textContent = 'Copied!';
+  feedback.style.display = 'none';
+
+  header.appendChild(label);
+  header.appendChild(copyBtn);
+  wrapper.appendChild(header);
+  wrapper.appendChild(notesList);
+  wrapper.appendChild(feedback);
+  container.appendChild(wrapper);
+
+  // Copy button handler
+  copyBtn.addEventListener('click', async () => {
+    const notesText = notesList.textContent.toLowerCase().replace(/\s/g, '');
+
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(notesText);
+        // Show feedback
+        feedback.style.display = 'block';
+        setTimeout(() => {
+          feedback.style.display = 'none';
+        }, 2000);
+      } else {
+        // Fallback for browsers without clipboard API
+        alert(`Copy these notes: ${notesText}`);
+      }
+    } catch (err) {
+      console.error('Failed to copy notes:', err);
+      alert(`Copy these notes: ${notesText}`);
+    }
+  });
+
+  // Controller API
+  return {
+    update(notes) {
+      if (notes && notes.length > 0) {
+        // Display as comma-separated uppercase (visually clear)
+        notesList.textContent = notes.join(', ');
+        wrapper.style.display = 'block';
+      } else {
+        notesList.textContent = 'No notes';
+        wrapper.style.display = 'none';
+      }
+    }
+  };
 }
 
 /**
